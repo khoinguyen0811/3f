@@ -180,16 +180,19 @@ function App() {
             title="Sản phẩm cho chó"
             products={dogProducts}
             onAddToCart={addToCart}
+            viewMoreHref="/?view=products&q=chó"
           />
           <ProductCatSection
             title="Các sản phẩm cho mèo"
             products={catProducts}
             onAddToCart={addToCart}
+            viewMoreHref="/?view=products&q=mèo"
           />
           <ProductCatSection
             title="Deal đang được quan tâm"
             products={saleProducts}
             onAddToCart={addToCart}
+            viewMoreHref="/?view=products"
           />
           <BlogSection />
         </>

@@ -14,19 +14,21 @@ const navItems = [
   {
     label: 'Chó', href: '/?view=products&q=chó', hasDropdown: true, items: [
       { label: 'Tất cả sản phẩm chó', href: '/?view=products&q=chó' },
-      { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=khô' },
-      { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=ướt' },
-      { label: 'Snack cho chó', href: '/?view=products&q=snack+chó' },
-      { label: 'Vệ sinh & Chăm sóc', href: '/?view=products&q=chó&category=Chăm+sóc+lông' },
+      { label: '🦴 Thức ăn hạt khô', href: '/?view=products&q=hạt+chó' },
+      { label: '🥫 Thức ăn ướt / pate', href: '/?view=products&q=pate+chó' },
+      { label: '🍖 Snack thưởng cho chó', href: '/?view=products&q=snack+chó' },
+      { label: '🧴 Dầu gội / vệ sinh', href: '/?view=products&q=dầu+gội+chó' },
+      { label: '🛁 Cát & khay vệ sinh', href: '/?view=products&q=vệ+sinh+chó' },
     ],
   },
   {
     label: 'Mèo', href: '/?view=products&q=mèo', hasDropdown: true, items: [
       { label: 'Tất cả sản phẩm mèo', href: '/?view=products&q=mèo' },
-      { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=khô' },
-      { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=ướt' },
-      { label: 'Snack cho mèo', href: '/?view=products&q=snack+mèo' },
-      { label: 'Khay & Bồn vệ sinh', href: '/?view=products&q=khay+mèo' },
+      { label: '🐟 Thức ăn hạt cho mèo', href: '/?view=products&q=hạt+mèo' },
+      { label: '🥫 Pate / thức ăn ướt mèo', href: '/?view=products&q=pate+mèo' },
+      { label: '🍣 Snack thưởng cho mèo', href: '/?view=products&q=snack+mèo' },
+      { label: '🚽 Cát vệ sinh cho mèo', href: '/?view=products&q=cát+mèo' },
+      { label: '🧶 Đồ chơi & phụ kiện mèo', href: '/?view=products&q=đồ+chơi+mèo' },
     ],
   },
   { label: 'Shop', href: '/?view=products' },
@@ -163,7 +165,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
                 {item.hasDropdown ? <ChevronIcon open={openMenu === item.label} /> : null}
               </a>
               {item.items && openMenu === item.label ? (
-                <div className="absolute left-0 top-full z-50 w-[245px] overflow-hidden rounded-[18px] border border-black/8 bg-white py-2 shadow-[0_18px_44px_rgba(31,41,55,0.14)]">
+                <div className="absolute left-0 top-full z-50 w-[260px] overflow-hidden rounded-[18px] border border-black/8 bg-white py-2 shadow-[0_18px_44px_rgba(31,41,55,0.14)]">
                   {item.items.map((subItem) => (
                     <a key={subItem.label} href={subItem.href}
                       className="block px-4 py-3 text-sm font-bold text-secondary transition-colors hover:bg-primary hover:text-white">
@@ -207,18 +209,21 @@ export default function Header({ cartCount = 0, onCartOpen }) {
             )}
           </div>
 
-          {/* Mobile search icon (always visible, opens input below) */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileSearchOpen((v) => !v);
-              setIsMobileMenuOpen(false);
-            }}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary transition-colors hover:border-primary hover:text-primary xl:hidden"
-            aria-label="Tìm kiếm"
+          {/* Mobile inline search (always visible, compact) */}
+          <form
+            onSubmit={handleMobileSearchSubmit}
+            className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 xl:hidden"
+            style={{ minWidth: 0, flex: '1 1 0', maxWidth: 180 }}
           >
             <SearchIcon />
-          </button>
+            <input
+              type="text"
+              value={mobileSearchQuery}
+              onChange={(e) => setMobileSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm..."
+              className="min-w-0 flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted"
+            />
+          </form>
 
           {/* Phone */}
           <a
@@ -235,7 +240,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           <button
             type="button"
             onClick={onCartOpen}
-            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-secondary transition-colors hover:text-primary"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-secondary transition-colors hover:text-primary"
             aria-label="Mở giỏ hàng"
           >
             <CartIcon />
@@ -250,7 +255,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           <button
             type="button"
             onClick={() => { setIsMobileMenuOpen((v) => !v); setIsMobileSearchOpen(false); }}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary xl:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary xl:hidden"
             aria-label="Mở menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -260,26 +265,6 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           </button>
         </div>
       </div>
-
-      {/* ── Mobile search bar (slides down when icon clicked) ── */}
-      {isMobileSearchOpen && (
-        <div className="border-t border-gray-100 bg-white px-4 py-3 xl:hidden">
-          <form onSubmit={handleMobileSearchSubmit} className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5">
-            <SearchIcon />
-            <input
-              ref={mobileSearchRef}
-              type="text"
-              value={mobileSearchQuery}
-              onChange={(e) => setMobileSearchQuery(e.target.value)}
-              placeholder="Tìm sản phẩm..."
-              className="flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted"
-            />
-            <button type="submit" className="text-xs font-extrabold text-primary">
-              Tìm
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* ── Mobile nav menu ── */}
       {isMobileMenuOpen && (
