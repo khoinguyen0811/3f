@@ -1,0 +1,532 @@
+import { useMemo, useState } from 'react';
+import { getAllProducts, getCatalogMeta } from '../data/products';
+
+const sortOptions = [
+  { value: 'popular', label: 'Bán chạy nhất' },
+  { value: 'price-asc', label: 'Giá tăng dần' },
+  { value: 'price-desc', label: 'Giá giảm dần' },
+  { value: 'rating', label: 'Đánh giá cao' },
+  { value: 'stock', label: 'Còn hàng nhiều' },
+];
+
+const priceBands = [
+  { id: 'under100', label: 'Dưới 100.000đ', min: 0, max: 100000 },
+  { id: '100to300', label: '100.000đ - 300.000đ', min: 100000, max: 300000 },
+  { id: '300to700', label: '300.000đ - 700.000đ', min: 300000, max: 700000 },
+  { id: '700plus', label: 'Trên 700.000đ', min: 700000, max: Infinity },
+];
+
+const PRODUCTS_PER_PAGE = 9;
+
+const Stars = ({ rating }) => (
+  <div className="flex items-center gap-0.5 text-amber-500">
+    {[...Array(5)].map((_, index) => (
+      <span key={index}>{index < Math.round(Number(rating)) ? '★' : '☆'}</span>
+    ))}
+  </div>
+);
+
+const parseQuery = () => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: params.get('q') || '',
+    category: params.get('category') || '',
+  };
+};
+
+const buildPaginationItems = (currentPage, totalPages) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+
+  if (currentPage <= 3) {
+    items.add(2);
+    items.add(3);
+    items.add(4);
+  }
+
+  if (currentPage >= totalPages - 2) {
+    items.add(totalPages - 1);
+    items.add(totalPages - 2);
+    items.add(totalPages - 3);
+  }
+
+  const sortedPages = [...items]
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+
+  const result = [];
+  for (let index = 0; index < sortedPages.length; index += 1) {
+    const page = sortedPages[index];
+    const previous = sortedPages[index - 1];
+
+    if (index > 0 && page - previous > 1) {
+      result.push(`ellipsis-${previous}-${page}`);
+    }
+
+    result.push(page);
+  }
+
+  return result;
+};
+
+export default function ProductCatalogPage({ onAddToCart }) {
+  const allProducts = getAllProducts();
+  const meta = getCatalogMeta();
+  const initial = parseQuery();
+
+  const [query, setQuery] = useState(initial.q);
+  const [selectedCategories, setSelectedCategories] = useState(initial.category ? [initial.category] : []);
+  const [selectedBadges, setSelectedBadges] = useState([]);
+  const [selectedPriceBands, setSelectedPriceBands] = useState([]);
+  const [sortBy, setSortBy] = useState('popular');
+  const [showInStockOnly, setShowInStockOnly] = useState(false);
+  const [showOnSaleOnly, setShowOnSaleOnly] = useState(false);
+  const [minRating, setMinRating] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const toggleValue = (value, values, setter) => {
+    setter(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
+  };
+
+  const filteredProducts = useMemo(() => {
+    let items = [...allProducts];
+
+    if (query.trim()) {
+      const lowered = query.trim().toLowerCase();
+      items = items.filter(
+        (product) =>
+          product.name.toLowerCase().includes(lowered) ||
+          product.category.toLowerCase().includes(lowered) ||
+          product.shortDescription.toLowerCase().includes(lowered),
+      );
+    }
+
+    if (selectedCategories.length > 0) {
+      items = items.filter((product) => selectedCategories.includes(product.category));
+    }
+
+    if (selectedBadges.length > 0) {
+      items = items.filter((product) => selectedBadges.includes(product.badge));
+    }
+
+    if (selectedPriceBands.length > 0) {
+      items = items.filter((product) =>
+        selectedPriceBands.some((bandId) => {
+          const band = priceBands.find((entry) => entry.id === bandId);
+          if (!band) return true;
+          return product.priceValue >= band.min && product.priceValue < band.max;
+        }),
+      );
+    }
+
+    if (showInStockOnly) {
+      items = items.filter((product) => product.stock > 0);
+    }
+
+    if (showOnSaleOnly) {
+      items = items.filter((product) => product.isOnSale);
+    }
+
+    if (minRating > 0) {
+      items = items.filter((product) => Number(product.rating) >= minRating);
+    }
+
+    switch (sortBy) {
+      case 'price-asc':
+        items.sort((a, b) => a.priceValue - b.priceValue);
+        break;
+      case 'price-desc':
+        items.sort((a, b) => b.priceValue - a.priceValue);
+        break;
+      case 'rating':
+        items.sort((a, b) => Number(b.rating) - Number(a.rating));
+        break;
+      case 'stock':
+        items.sort((a, b) => b.stock - a.stock);
+        break;
+      case 'popular':
+      default:
+        items.sort((a, b) => b.sold - a.sold);
+        break;
+    }
+
+    return items;
+  }, [
+    allProducts,
+    minRating,
+    query,
+    selectedBadges,
+    selectedCategories,
+    selectedPriceBands,
+    showInStockOnly,
+    showOnSaleOnly,
+    sortBy,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const activePage = Math.min(currentPage, totalPages);
+  const paginationItems = useMemo(
+    () => buildPaginationItems(activePage, totalPages),
+    [activePage, totalPages],
+  );
+  const paginatedProducts = useMemo(() => {
+    const start = (activePage - 1) * PRODUCTS_PER_PAGE;
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [activePage, filteredProducts]);
+
+  const clearFilters = () => {
+    setQuery('');
+    setSelectedCategories([]);
+    setSelectedBadges([]);
+    setSelectedPriceBands([]);
+    setSortBy('popular');
+    setShowInStockOnly(false);
+    setShowOnSaleOnly(false);
+    setMinRating(0);
+    setCurrentPage(1);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#FFF9F4] pb-20 pt-10">
+      <div className="mx-auto max-w-[1480px] px-6">
+        <section className="mb-8 rounded-[30px] bg-white px-6 py-8 shadow-[0_20px_50px_rgba(31,41,55,0.06)] lg:px-10">
+          <span className="text-sm font-bold uppercase tracking-wider text-primary">Trang sản phẩm</span>
+          <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <h1 className="font-display text-4xl font-extrabold text-secondary lg:text-5xl">
+                Chọn sản phẩm theo nhu cầu thật của boss
+              </h1>
+              <p className="mt-3 text-base leading-relaxed text-muted">
+                Lọc nhanh theo danh mục, giá, đánh giá, khuyến mãi và trạng thái còn hàng để tìm đúng sản phẩm phù hợp.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-[#FFF7EF] px-5 py-4 text-center">
+              <div className="font-display text-3xl font-extrabold text-primary">
+                {filteredProducts.length}
+              </div>
+              <div className="text-sm text-muted">Sản phẩm phù hợp</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
+          <aside className="space-y-5">
+            <div className="rounded-[28px] bg-white p-5 shadow-[0_18px_44px_rgba(31,41,55,0.06)]">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-2xl font-extrabold text-secondary">Bộ lọc</h2>
+                <button onClick={clearFilters} className="text-sm font-bold text-primary">
+                  Xóa hết
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="mb-2 block text-sm font-bold uppercase tracking-wider text-secondary">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Tên sản phẩm, mô tả..."
+                    className="w-full rounded-2xl border border-gray-200 bg-[#FFFDF9] px-4 py-3 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Danh mục</p>
+                  <div className="space-y-2">
+                    {meta.categories.map((category) => (
+                      <label key={category} className="flex cursor-pointer items-center gap-3 text-sm text-secondary">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category)}
+                          onChange={() => toggleValue(category, selectedCategories, setSelectedCategories)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <span>{category}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Khoảng giá</p>
+                  <div className="space-y-2">
+                    {priceBands.map((band) => (
+                      <label key={band.id} className="flex cursor-pointer items-center gap-3 text-sm text-secondary">
+                        <input
+                          type="checkbox"
+                          checked={selectedPriceBands.includes(band.id)}
+                          onChange={() => toggleValue(band.id, selectedPriceBands, setSelectedPriceBands)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <span>{band.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted">
+                    Giá cao nhất hiện có: {meta.maxPrice.toLocaleString('vi-VN')}đ
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Trạng thái</p>
+                  <div className="space-y-2">
+                    <label className="flex cursor-pointer items-center gap-3 text-sm text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={showInStockOnly}
+                        onChange={() => setShowInStockOnly((value) => !value)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span>Chỉ hiện sản phẩm còn hàng</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3 text-sm text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={showOnSaleOnly}
+                        onChange={() => setShowOnSaleOnly((value) => !value)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span>Đang khuyến mãi</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Đánh giá tối thiểu</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[0, 4, 4.5, 4.8].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => setMinRating(value)}
+                        className={`rounded-2xl px-3 py-2 text-sm font-semibold transition-colors ${
+                          minRating === value
+                            ? 'bg-primary text-white'
+                            : 'bg-[#FFF7EF] text-secondary hover:text-primary'
+                        }`}
+                      >
+                        {value === 0 ? 'Tất cả' : `${value}+ sao`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Nhãn sản phẩm</p>
+                  <div className="flex flex-wrap gap-2">
+                    {meta.badges.slice(0, 8).map((badge) => (
+                      <button
+                        key={badge}
+                        onClick={() => toggleValue(badge, selectedBadges, setSelectedBadges)}
+                        className={`rounded-full px-3 py-2 text-xs font-bold transition-colors ${
+                          selectedBadges.includes(badge)
+                            ? 'bg-primary text-white'
+                            : 'bg-[#FFF7EF] text-secondary hover:text-primary'
+                        }`}
+                      >
+                        {badge}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div>
+            <div className="mb-5 flex flex-col gap-4 rounded-[24px] bg-white p-5 shadow-[0_18px_44px_rgba(31,41,55,0.06)] md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {selectedCategories.map((category) => (
+                  <span key={category} className="rounded-full bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                    {category}
+                  </span>
+                ))}
+                {selectedPriceBands.map((bandId) => {
+                  const band = priceBands.find((item) => item.id === bandId);
+                  return (
+                    <span key={bandId} className="rounded-full bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                      {band?.label}
+                    </span>
+                  );
+                })}
+                {showInStockOnly ? (
+                  <span className="rounded-full bg-primary/10 px-3 py-2 text-xs font-bold text-primary">Còn hàng</span>
+                ) : null}
+                {showOnSaleOnly ? (
+                  <span className="rounded-full bg-primary/10 px-3 py-2 text-xs font-bold text-primary">Khuyến mãi</span>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-muted">Sắp xếp</span>
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-secondary outline-none focus:border-primary"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-5 flex items-center justify-between text-sm text-muted">
+              <span>
+                Trang {activePage}/{totalPages}
+              </span>
+              <span>
+                Hiển thị {(activePage - 1) * PRODUCTS_PER_PAGE + 1}
+                {' - '}
+                {Math.min(activePage * PRODUCTS_PER_PAGE, filteredProducts.length)}
+                {' / '}
+                {filteredProducts.length} sản phẩm
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {paginatedProducts.map((product) => (
+                <article
+                  key={product.slug}
+                  className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                >
+                  <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
+                    <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
+                      {product.badge}
+                    </span>
+                    {product.discountPercent ? (
+                      <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
+                        {product.discountPercent}
+                      </span>
+                    ) : null}
+                  </a>
+
+                  <div className="p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        {product.category}
+                      </span>
+                      <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
+                    </div>
+
+                    <a href={`/?product=${product.slug}`}>
+                      <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
+                        {product.name}
+                      </h3>
+                    </a>
+
+                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">
+                      {product.shortDescription}
+                    </p>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div>
+                        <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
+                        {product.oldPrice ? (
+                          <div className="text-sm text-muted line-through">{product.oldPrice}</div>
+                        ) : null}
+                      </div>
+                      <div className="text-right text-sm text-muted">
+                        <div>{product.stockLabel}</div>
+                        <div className="mt-1 flex items-center justify-end gap-2">
+                          <Stars rating={product.rating} />
+                          <span>({product.reviews})</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
+                        disabled={product.stock <= 0}
+                        className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Thêm giỏ
+                      </button>
+                      <a
+                        href={`/?product=${product.slug}`}
+                        className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
+                      >
+                        Chi tiết
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {filteredProducts.length > 0 && totalPages > 1 && (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, activePage - 1))}
+                  disabled={activePage === 1}
+                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Trước
+                </button>
+
+                {paginationItems.map((item) => {
+                  if (typeof item === 'string') {
+                    return (
+                      <span
+                        key={item}
+                        className="flex h-10 min-w-10 items-center justify-center px-1 text-sm font-bold text-muted"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      className={`h-10 min-w-10 rounded-full px-3 text-sm font-bold transition-colors ${
+                        activePage === item
+                          ? 'bg-primary text-white'
+                          : 'bg-white text-secondary hover:text-primary'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, activePage + 1))}
+                  disabled={activePage === totalPages}
+                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Sau
+                </button>
+              </div>
+            )}
+
+            {filteredProducts.length === 0 && (
+              <div className="rounded-[26px] bg-white p-10 text-center shadow-[0_18px_44px_rgba(31,41,55,0.06)]">
+                <h3 className="font-display text-2xl font-extrabold text-secondary">Không có sản phẩm phù hợp</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  Hãy thử bỏ bớt một vài bộ lọc hoặc tìm với từ khóa khác.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
