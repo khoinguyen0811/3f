@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAllProducts, getCatalogMeta } from '../data/products';
+import ProductCard from './ProductCard';
 
 const sortOptions = [
   { value: 'popular', label: 'Bán chạy nhất' },
@@ -130,13 +131,6 @@ function CategoryTree({ tree, selectedCategories, onToggle, allProducts }) {
   );
 }
 
-const Stars = ({ rating }) => (
-  <div className="flex items-center gap-0.5 text-amber-500">
-    {[...Array(5)].map((_, index) => (
-      <span key={index}>{index < Math.round(Number(rating)) ? '★' : '☆'}</span>
-    ))}
-  </div>
-);
 
 const parseQuery = () => {
   const params = new URLSearchParams(window.location.search);
@@ -523,64 +517,9 @@ export default function ProductCatalogPage({ onAddToCart }) {
 
             {/* ── Mobile: load-more list ── */}
             <div className="sm:hidden">
-              <div className="grid grid-cols-1 gap-5">
+              <div className="grid grid-cols-2 gap-2.5">
                 {mobileProducts.map((product) => (
-                  <article
-                    key={product.slug}
-                    className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                  >
-                    <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
-                      <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
-                        {product.badge}
-                      </span>
-                      {product.discountPercent ? (
-                        <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
-                          {product.discountPercent}
-                        </span>
-                      ) : null}
-                    </a>
-                    <div className="p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</span>
-                        <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
-                      </div>
-                      <a href={`/?product=${product.slug}`}>
-                        <h3 className="mt-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
-                          {product.name}
-                        </h3>
-                      </a>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div>
-                          <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
-                          {product.oldPrice ? <div className="text-sm text-muted line-through">{product.oldPrice}</div> : null}
-                        </div>
-                        <div className="text-right text-sm text-muted">
-                          <div>{product.stockLabel}</div>
-                          <div className="mt-1 flex items-center justify-end gap-2">
-                            <Stars rating={product.rating} />
-                            <span>({product.reviews})</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
-                        <button
-                          type="button"
-                          onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
-                          disabled={product.stock <= 0}
-                          className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          Thêm giỏ
-                        </button>
-                        <a
-                          href={`/?product=${product.slug}`}
-                          className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
-                        >
-                          Chi tiết
-                        </a>
-                      </div>
-                    </div>
-                  </article>
+                  <ProductCard key={product.slug} product={product} onAddToCart={onAddToCart} />
                 ))}
               </div>
 
@@ -588,77 +527,21 @@ export default function ProductCatalogPage({ onAddToCart }) {
                 <button
                   type="button"
                   onClick={() => setMobileCount((c) => c + MOBILE_PAGE_SIZE)}
-                  className="mt-6 w-full rounded-full border-2 border-primary bg-white py-4 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white"
+                  className="mt-5 w-full rounded-full border-2 border-primary bg-white py-3.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white"
                 >
                   Xem thêm ({Math.min(MOBILE_PAGE_SIZE, filteredProducts.length - mobileCount)} sản phẩm)
                 </button>
               )}
               {mobileCount >= filteredProducts.length && filteredProducts.length > MOBILE_PAGE_SIZE && (
-                <p className="mt-6 text-center text-sm text-muted">Đã hiển thị tất cả {filteredProducts.length} sản phẩm</p>
+                <p className="mt-5 text-center text-sm text-muted">Đã hiển thị tất cả {filteredProducts.length} sản phẩm</p>
               )}
             </div>
 
             {/* ── Desktop: pagination ── */}
             <div className="hidden sm:block">
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
                 {paginatedProducts.map((product) => (
-                  <article
-                    key={product.slug}
-                    className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
-                  >
-                    <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
-                      <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
-                        {product.badge}
-                      </span>
-                      {product.discountPercent ? (
-                        <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
-                          {product.discountPercent}
-                        </span>
-                      ) : null}
-                    </a>
-                    <div className="p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</span>
-                        <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
-                      </div>
-                      <a href={`/?product=${product.slug}`}>
-                        <h3 className="mt-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
-                          {product.name}
-                        </h3>
-                      </a>
-                      <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">{product.shortDescription}</p>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div>
-                          <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
-                          {product.oldPrice ? <div className="text-sm text-muted line-through">{product.oldPrice}</div> : null}
-                        </div>
-                        <div className="text-right text-sm text-muted">
-                          <div>{product.stockLabel}</div>
-                          <div className="mt-1 flex items-center justify-end gap-2">
-                            <Stars rating={product.rating} />
-                            <span>({product.reviews})</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
-                        <button
-                          type="button"
-                          onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
-                          disabled={product.stock <= 0}
-                          className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          Thêm giỏ
-                        </button>
-                        <a
-                          href={`/?product=${product.slug}`}
-                          className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
-                        >
-                          Chi tiết
-                        </a>
-                      </div>
-                    </div>
-                  </article>
+                  <ProductCard key={product.slug} product={product} onAddToCart={onAddToCart} />
                 ))}
               </div>
 

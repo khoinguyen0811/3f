@@ -139,11 +139,11 @@ export default function Header({ cartCount = 0, onCartOpen }) {
         <span className="bg-[#62B44B]" />
       </div>
 
-      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10 xl:px-12">
+      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center gap-2 px-3 sm:px-6 lg:px-10 xl:px-12">
 
         {/* Logo */}
         <a href="/" className="flex shrink-0 items-center" aria-label="3F Store">
-          <img src="/logo-3f.png" alt="3F Store" className="h-auto w-[100px] object-contain sm:w-[136px]" />
+          <img src="/logo-3f.png" alt="3F Store" className="h-auto w-[88px] object-contain sm:w-[136px]" />
         </a>
 
         {/* Desktop nav */}
@@ -178,8 +178,23 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           ))}
         </nav>
 
-        {/* Right actions */}
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Mobile inline search — flex-1 để fill space giữa logo và icons */}
+        <form
+          onSubmit={handleMobileSearchSubmit}
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 xl:hidden"
+        >
+          <SearchIcon />
+          <input
+            type="text"
+            value={mobileSearchQuery}
+            onChange={(e) => setMobileSearchQuery(e.target.value)}
+            placeholder="Tìm kiếm..."
+            className="min-w-0 flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted"
+          />
+        </form>
+
+        {/* Right icons */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
 
           {/* Desktop search expand */}
           <div ref={searchBoxRef} className="relative hidden xl:flex items-center">
@@ -208,22 +223,6 @@ export default function Header({ cartCount = 0, onCartOpen }) {
               </button>
             )}
           </div>
-
-          {/* Mobile inline search (always visible, compact) */}
-          <form
-            onSubmit={handleMobileSearchSubmit}
-            className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 xl:hidden"
-            style={{ minWidth: 0, flex: '1 1 0', maxWidth: 180 }}
-          >
-            <SearchIcon />
-            <input
-              type="text"
-              value={mobileSearchQuery}
-              onChange={(e) => setMobileSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm..."
-              className="min-w-0 flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted"
-            />
-          </form>
 
           {/* Phone */}
           <a
