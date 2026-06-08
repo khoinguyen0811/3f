@@ -73,7 +73,7 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
   };
 
   return (
-    <main className="bg-[#FFF9F4] pb-20 pt-10">
+    <main className="bg-[#FFF9F4] pb-20 pt-[106px]">
       <div className="mx-auto max-w-[1400px] px-6">
         <div className="mb-6 text-sm text-muted">
           <a href="/" className="transition-colors hover:text-primary">Trang chủ</a>

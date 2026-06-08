@@ -18,6 +18,118 @@ const priceBands = [
 
 const PRODUCTS_PER_PAGE = 9;
 
+// ── Category tree dropdown component ────────────────────────────────────────
+function CategoryTree({ tree, selectedCategories, onToggle, allProducts }) {
+  const [openGroups, setOpenGroups] = useState({});
+
+  const toggleGroup = (name) =>
+    setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
+
+  const countForCategory = (catName) =>
+    allProducts.filter((p) => p.category === catName || p.topCategory === catName).length;
+
+  return (
+    <div className="space-y-1">
+      {tree.map((group) => {
+        const hasChildren = group.children.length > 0;
+        const isOpen = openGroups[group.name] ?? false;
+        // parent is "selected" if all its children are selected, or if it has no children and is directly selected
+        const parentSelected = hasChildren
+          ? group.children.every((c) => selectedCategories.includes(c))
+          : selectedCategories.includes(group.name);
+        const someChildSelected = hasChildren && group.children.some((c) => selectedCategories.includes(c));
+
+        return (
+          <div key={group.name}>
+            {/* Parent row */}
+            <div className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-50">
+              {hasChildren ? (
+                <>
+                  {/* indeterminate-style checkbox for parent */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (parentSelected) {
+                        // deselect all children
+                        group.children.forEach((c) => {
+                          if (selectedCategories.includes(c)) onToggle(c);
+                        });
+                      } else {
+                        // select all children
+                        group.children.forEach((c) => {
+                          if (!selectedCategories.includes(c)) onToggle(c);
+                        });
+                      }
+                    }}
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                      parentSelected
+                        ? 'border-primary bg-primary text-white'
+                        : someChildSelected
+                        ? 'border-primary bg-primary/20 text-primary'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                    aria-label={`Chọn tất cả ${group.name}`}
+                  >
+                    {parentSelected ? (
+                      <svg className="h-2.5 w-2.5" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : someChildSelected ? (
+                      <span className="block h-0.5 w-2.5 rounded bg-primary" />
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.name)}
+                    className="flex flex-1 items-center justify-between text-sm font-bold text-secondary"
+                  >
+                    <span>{group.name}</span>
+                    <svg
+                      className={`h-3.5 w-3.5 text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      viewBox="0 0 20 20" fill="currentColor"
+                    >
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <label className="flex flex-1 cursor-pointer items-center gap-2 text-sm font-bold text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(group.name)}
+                    onChange={() => onToggle(group.name)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <span className="flex-1">{group.name}</span>
+                  <span className="text-xs text-muted">{countForCategory(group.name)}</span>
+                </label>
+              )}
+            </div>
+
+            {/* Children rows */}
+            {hasChildren && isOpen && (
+              <div className="mb-1 ml-6 space-y-0.5 border-l border-gray-100 pl-3">
+                {group.children.map((child) => (
+                  <label key={child} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-secondary hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(child)}
+                      onChange={() => onToggle(child)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="flex-1">{child}</span>
+                    <span className="text-xs text-muted">{countForCategory(child)}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const Stars = ({ rating }) => (
   <div className="flex items-center gap-0.5 text-amber-500">
     {[...Array(5)].map((_, index) => (
@@ -105,7 +217,11 @@ export default function ProductCatalogPage({ onAddToCart }) {
     }
 
     if (selectedCategories.length > 0) {
-      items = items.filter((product) => selectedCategories.includes(product.category));
+      items = items.filter(
+        (product) =>
+          selectedCategories.includes(product.category) ||
+          selectedCategories.includes(product.topCategory),
+      );
     }
 
     if (selectedBadges.length > 0) {
@@ -190,7 +306,7 @@ export default function ProductCatalogPage({ onAddToCart }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#FFF9F4] pb-20 pt-10">
+    <main className="min-h-screen bg-[#FFF9F4] pb-20 pt-[106px]">
       <div className="mx-auto max-w-[1480px] px-6">
         <section className="mb-8 rounded-[30px] bg-white px-6 py-8 shadow-[0_20px_50px_rgba(31,41,55,0.06)] lg:px-10">
           <span className="text-sm font-bold uppercase tracking-wider text-primary">Trang sản phẩm</span>
@@ -213,7 +329,7 @@ export default function ProductCatalogPage({ onAddToCart }) {
         </section>
 
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
-          <aside className="space-y-5">
+          <aside className="space-y-5 lg:sticky lg:top-[100px] lg:self-start lg:max-h-[calc(100svh-120px)] lg:overflow-y-auto lg:pr-1">
             <div className="rounded-[28px] bg-white p-5 shadow-[0_18px_44px_rgba(31,41,55,0.06)]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-display text-2xl font-extrabold text-secondary">Bộ lọc</h2>
@@ -237,19 +353,12 @@ export default function ProductCatalogPage({ onAddToCart }) {
 
                 <div>
                   <p className="mb-3 text-sm font-bold uppercase tracking-wider text-secondary">Danh mục</p>
-                  <div className="space-y-2">
-                    {meta.categories.map((category) => (
-                      <label key={category} className="flex cursor-pointer items-center gap-3 text-sm text-secondary">
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.includes(category)}
-                          onChange={() => toggleValue(category, selectedCategories, setSelectedCategories)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <span>{category}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <CategoryTree
+                    tree={meta.categoryTree}
+                    selectedCategories={selectedCategories}
+                    onToggle={(cat) => toggleValue(cat, selectedCategories, setSelectedCategories)}
+                    allProducts={allProducts}
+                  />
                 </div>
 
                 <div>

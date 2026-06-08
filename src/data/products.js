@@ -265,5 +265,27 @@ export const getCatalogMeta = () => {
   );
   const maxPrice = Math.max(...products.map((product) => product.priceValue), 0);
 
-  return { categories, badges, maxPrice };
+  // Build category tree from fullCategory paths (e.g. "Chó > Thức ăn cho chó")
+  const treeMap = {};
+  products.forEach((product) => {
+    const parts = product.fullCategory.split(' > ').map((p) => p.trim());
+    if (parts.length >= 2) {
+      const parent = parts[0];
+      const child = parts[parts.length - 1];
+      if (!treeMap[parent]) treeMap[parent] = new Set();
+      treeMap[parent].add(child);
+    } else {
+      const leaf = parts[0];
+      if (!treeMap[leaf]) treeMap[leaf] = new Set();
+    }
+  });
+
+  const categoryTree = Object.entries(treeMap)
+    .map(([parent, childSet]) => ({
+      name: parent,
+      children: [...childSet].sort((a, b) => a.localeCompare(b, 'vi')),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+
+  return { categories, badges, maxPrice, categoryTree };
 };

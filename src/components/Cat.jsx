@@ -102,8 +102,7 @@ export default function ProductCatSection({
               {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                 <div
                   key={slideIndex}
-                  className="grid min-w-full gap-4 sm:gap-5"
-                  style={{ gridTemplateColumns: `repeat(${productsPerSlide}, minmax(0, 1fr))` }}
+                  className="grid min-w-full gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                 >
                   {products
                     .slice(slideIndex * productsPerSlide, (slideIndex + 1) * productsPerSlide)

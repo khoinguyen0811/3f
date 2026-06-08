@@ -11,8 +11,20 @@ const navItems = [
       { label: 'Tin tức', href: '#news' },
     ],
   },
-  { label: 'Chó', href: '/?view=products&q=chó' },
-  { label: 'Mèo', href: '/?view=products&q=mèo' },
+  { label: 'Chó', href: '/?view=products&q=chó', hasDropdown: true, items: [
+      { label: 'Tất cả sản phẩm chó', href: '/?view=products&q=chó' },
+      { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=khô' },
+      { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=ướt' },
+      { label: 'Snack cho chó', href: '/?view=products&q=snack+chó' },
+      { label: 'Vệ sinh & Chăm sóc', href: '/?view=products&q=chó&category=Chăm+sóc+lông' },
+    ]},
+  { label: 'Mèo', href: '/?view=products&q=mèo', hasDropdown: true, items: [
+      { label: 'Tất cả sản phẩm mèo', href: '/?view=products&q=mèo' },
+      { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=khô' },
+      { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=ướt' },
+      { label: 'Snack cho mèo', href: '/?view=products&q=snack+mèo' },
+      { label: 'Khay & Bồn vệ sinh', href: '/?view=products&q=khay+mèo' },
+    ]},
   { label: 'Shop', href: '/?view=products' },
   {
     label: 'Dịch vụ thú cưng',
@@ -53,7 +65,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
   const handleMenuClose = () => setOpenMenu(null);
 
   return (
-    <header className="site-header sticky top-0 z-50 bg-white text-secondary shadow-[0_12px_35px_rgba(31,41,55,0.07)]">
+    <header className="site-header fixed top-0 left-0 right-0 z-50 bg-white text-secondary shadow-[0_12px_35px_rgba(31,41,55,0.07)]">
       <div className="grid h-1.5 grid-cols-4">
         <span className="bg-primary" />
         <span className="bg-[#FFB84D]" />
