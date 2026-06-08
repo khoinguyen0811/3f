@@ -333,13 +333,22 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
           </div>
           <div className="space-y-4">
             {reviews.map((r) => (
-              <article key={r.name} className="rounded-[22px] border border-gray-100 bg-[#FFFCF8] p-5">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div><h3 className="font-bold text-secondary">{r.name}</h3><p className="text-xs text-muted">{r.date}</p></div>
-                  <div className="text-amber-500">{'★'.repeat(r.rating)}</div>
+              <article key={r.name} className="rounded-[22px] border border-gray-100 bg-[#FFFCF8] p-4">
+                <div className="flex items-center gap-3">
+                  {/* Avatar */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-extrabold text-white">
+                    {r.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-1 items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-secondary">{r.name}</h3>
+                      <p className="text-[11px] text-muted">{r.date}</p>
+                    </div>
+                    <div className="text-sm text-amber-500">{'★'.repeat(r.rating)}</div>
+                  </div>
                 </div>
-                <h4 className="mt-3 font-display text-lg font-extrabold text-secondary">{r.title}</h4>
-                <p className="mt-2 text-sm leading-7 text-muted">{r.content}</p>
+                <h4 className="mt-3 text-sm font-extrabold text-secondary">{r.title}</h4>
+                <p className="mt-1 text-xs leading-6 text-muted">{r.content}</p>
               </article>
             ))}
           </div>
