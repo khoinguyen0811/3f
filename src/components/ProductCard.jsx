@@ -57,7 +57,7 @@ export default function ProductCard({ product, onAddToCart }) {
           <button
             type="button"
             onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
-            disabled={product.stock <= 0}
+            disabled={product.stock != null && product.stock <= 0}
             className="rounded-lg bg-primary py-2 text-[11px] font-bold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Thêm

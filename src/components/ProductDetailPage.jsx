@@ -10,7 +10,7 @@ const benefitRows = [
   { title: 'Đổi trả miễn phí', value: 'Trong 7 ngày' },
   { title: '100% chính hãng', value: '200+ thương hiệu' },
 ];
-            
+
 const reviewTemplates = [
   { name: 'Minh Anh', date: '12/05/2026', title: 'Sản phẩm đúng mô tả', content: 'Đóng gói chắc tay, giao nhanh và bé dùng hợp ngay từ lần đầu.' },
   { name: 'Quốc Huy', date: '28/04/2026', title: 'Mua lại lần thứ hai', content: 'Giá ổn, date mới và shop tư vấn khá kỹ trước khi chốt đơn.' },
@@ -71,8 +71,11 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
 
   const activePrice = matchedOption?.priceFormatted || product.price;
   const activeOldPrice = matchedOption?.oldPriceFormatted || product.oldPrice;
-  const activeStock = matchedOption?.stock ?? product.stock;
-  const maxQuantity = Math.max(activeStock || 1, 1);
+  // Dùng stock của matched option, fallback về product.stock nếu option không có stock hợp lệ
+  const activeStock = (matchedOption && matchedOption.stock != null && matchedOption.stock > 0)
+    ? matchedOption.stock
+    : product.stock || 99;
+  const maxQuantity = Math.max(activeStock, 1);
 
   // images: matched option img first, then all product images
   const images = useMemo(() => {

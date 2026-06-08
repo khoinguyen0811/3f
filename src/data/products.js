@@ -214,13 +214,16 @@ export const transformProducts = (data) => {
       const vOldPrice = saleP && saleP < origP ? origP : 0;
       const vStock = r.item['Tồn kho'];
       const vStockVal = Number(vStock);
+      const vStockFinal = (vStock !== null && vStock !== undefined && vStock !== '' && Number.isFinite(vStockVal))
+        ? Math.max(vStockVal, 0)
+        : 99; // không có data → coi là có sẵn
       return {
         attrs,
         price: vPrice,
         priceFormatted: formatCurrency(vPrice),
         oldPrice: vOldPrice,
         oldPriceFormatted: vOldPrice ? formatCurrency(vOldPrice) : '',
-        stock: Number.isFinite(vStockVal) ? Math.max(vStockVal, 0) : 99,
+        stock: vStockFinal,
         img: r.item['Ảnh sản phẩm'] || rep['Ảnh sản phẩm'] || '/dog_about.png',
       };
     });
