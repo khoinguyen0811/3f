@@ -358,7 +358,7 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
                   </div>
                   <div className="p-4">
                     <span className="text-xs font-semibold uppercase tracking-wider text-primary">{item.category}</span>
-                    <h3 className="mt-1 line-clamp-2 font-display text-base font-extrabold text-secondary sm:text-lg">{item.name}</h3>
+                    <h3 className="mt-1 font-display text-base font-extrabold text-secondary sm:text-lg">{item.name}</h3>
                     <div className="mt-3 font-display text-lg font-extrabold text-primary sm:text-xl">{item.price}</div>
                   </div>
                 </a>

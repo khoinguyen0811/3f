@@ -546,7 +546,7 @@ export default function ProductCatalogPage({ onAddToCart }) {
                         <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
                       </div>
                       <a href={`/?product=${product.slug}`}>
-                        <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
+                        <h3 className="mt-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
                           {product.name}
                         </h3>
                       </a>
@@ -623,7 +623,7 @@ export default function ProductCatalogPage({ onAddToCart }) {
                         <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
                       </div>
                       <a href={`/?product=${product.slug}`}>
-                        <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
+                        <h3 className="mt-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
                           {product.name}
                         </h3>
                       </a>

@@ -36,7 +36,7 @@ const MobileCard = ({ product, onAddToCart }) => (
     </a>
     <div className="flex flex-1 flex-col p-2.5">
       <a href={`/?product=${product.slug}`} className="flex-1">
-        <h3 className="line-clamp-2 text-xs font-bold leading-snug text-secondary">{product.name}</h3>
+        <h3 className="text-xs font-bold leading-snug text-secondary">{product.name}</h3>
       </a>
       <div className="mt-1 flex items-center gap-1">
         <Stars rating={product.rating} />
@@ -152,7 +152,7 @@ export default function ProductCatSection({
                         <div className="flex flex-1 flex-col p-5">
                           <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</span>
                           <a href={`/?product=${product.slug}`} className="flex-1">
-                            <h3 className="line-clamp-2 text-base font-bold leading-snug text-secondary transition-colors hover:text-primary">
+                            <h3 className="text-base font-bold leading-snug text-secondary transition-colors hover:text-primary">
                               {product.name}
                             </h3>
                           </a>
