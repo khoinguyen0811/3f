@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getFeaturedProducts } from '../data/products';
+import ProductCard from './ProductCard';
 
 const Stars = ({ rating }) => (
   <div className="flex items-center gap-0.5">
@@ -7,7 +8,7 @@ const Stars = ({ rating }) => (
       <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
         fill={i < Math.floor(rating) ? 'currentColor' : 'none'}
         stroke="currentColor" strokeWidth={i < Math.floor(rating) ? 0 : 1.5}
-        className={`h-3 w-3 ${i < Math.floor(rating) ? 'text-amber-400' : 'text-gray-300'}`}>
+        className={`h-3.5 w-3.5 ${i < Math.floor(rating) ? 'text-amber-400' : 'text-gray-300'}`}>
         <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005z" clipRule="evenodd" />
       </svg>
     ))}
@@ -22,45 +23,6 @@ const getProductsPerSlide = () => {
   if (window.innerWidth < 1024) return 3;
   return 4;
 };
-
-// Compact product card for mobile 2-col grid
-const MobileCard = ({ product, onAddToCart }) => (
-  <article className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100/60 bg-white shadow-sm">
-    <a href={`/?product=${product.slug}`} className="relative block overflow-hidden bg-gray-50" style={{ aspectRatio: '1' }}>
-      <img src={product.img} alt={product.name}
-        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        onError={(e) => { e.target.src = '/dog_about.png'; }} />
-      <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${product.badgeColor || 'bg-red-500'}`}>
-        {product.badge}
-      </span>
-    </a>
-    <div className="flex flex-1 flex-col p-2.5">
-      <a href={`/?product=${product.slug}`} className="flex-1">
-        <h3 className="text-xs font-bold leading-snug text-secondary">{product.name}</h3>
-      </a>
-      <div className="mt-1 flex items-center gap-1">
-        <Stars rating={product.rating} />
-        <span className="text-[10px] text-muted">({product.reviews})</span>
-      </div>
-      <div className="mt-1.5">
-        <span className="text-sm font-extrabold text-red-500">{product.price}</span>
-        {product.oldPrice ? <span className="ml-1 text-[10px] text-muted line-through">{product.oldPrice}</span> : null}
-      </div>
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <button type="button"
-          onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
-          disabled={product.stock <= 0}
-          className="rounded-lg bg-primary py-2 text-[11px] font-bold text-white disabled:opacity-50">
-          Thêm
-        </button>
-        <a href={`/?product=${product.slug}`}
-          className="rounded-lg border border-secondary/15 py-2 text-center text-[11px] font-bold text-secondary hover:border-primary hover:text-primary">
-          Chi tiết
-        </a>
-      </div>
-    </div>
-  </article>
-);
 
 export default function ProductCatSection({
   title = 'Sản phẩm nổi bật',
@@ -81,9 +43,6 @@ export default function ProductCatSection({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Mobile: show first 4 products only, then "Xem thêm" button
-  const mobileProducts = products.slice(0, 4);
-
   return (
     <section id={anchorId} className="bg-white py-8 sm:py-12">
       <div className="mx-auto max-w-[1400px] px-3 sm:px-6">
@@ -91,7 +50,6 @@ export default function ProductCatSection({
         {/* Header row */}
         <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6">
           <h3 className="min-w-0 font-display text-lg font-extrabold text-secondary sm:text-2xl">{title}</h3>
-          {/* Desktop: prev/next arrows */}
           <div className="hidden sm:flex gap-2">
             <button type="button" onClick={() => setCurrentIndex((p) => (p - 1 + totalSlides) % totalSlides)}
               disabled={totalSlides <= 1}
@@ -112,11 +70,11 @@ export default function ProductCatSection({
           </div>
         </div>
 
-        {/* ── Mobile: 2-col grid, 4 products + "Xem thêm" ── */}
+        {/* ── Mobile: 2-col grid dùng ProductCard chung ── */}
         <div className="sm:hidden">
           <div className="grid grid-cols-2 gap-2.5">
-            {mobileProducts.map((product) => (
-              <MobileCard key={product.slug} product={product} onAddToCart={onAddToCart} />
+            {products.slice(0, 4).map((product) => (
+              <ProductCard key={product.slug} product={product} onAddToCart={onAddToCart} />
             ))}
           </div>
           <a href={viewMoreHref}
@@ -134,8 +92,7 @@ export default function ProductCatSection({
             <div className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
               {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                <div key={slideIndex}
-                  className="grid min-w-full gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div key={slideIndex} className="grid min-w-full gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {products
                     .slice(slideIndex * productsPerSlide, (slideIndex + 1) * productsPerSlide)
                     .map((product, index) => (

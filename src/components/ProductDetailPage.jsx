@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { getRelatedProducts } from '../data/products';
+import ProductCard from './ProductCard';
 
 const benefitRows = [
   { title: 'Giao hỏa tốc 2H', value: 'Nội thành Tp.HCM' },
@@ -350,18 +351,7 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
             </div>
             <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
               {relatedProducts.map((item) => (
-                <a key={item.slug} href={`/?product=${item.slug}`}
-                  className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
-                  <div className="aspect-square overflow-hidden bg-gray-50">
-                    <img src={item.img} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => { e.target.src = '/dog_about.png'; }} />
-                  </div>
-                  <div className="p-4">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">{item.category}</span>
-                    <h3 className="mt-1 font-display text-base font-extrabold text-secondary sm:text-lg">{item.name}</h3>
-                    <div className="mt-3 font-display text-lg font-extrabold text-primary sm:text-xl">{item.price}</div>
-                  </div>
-                </a>
+                <ProductCard key={item.slug} product={item} onAddToCart={onAddToCart} />
               ))}
             </div>
           </section>
