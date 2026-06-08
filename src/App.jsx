@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import About from './components/About';
 import HorizontalBanners from './components/HorizontalBanners';
-import Services from './components/Services';
 import ProductCatSection from './components/Cat';
 import BlogSection from './components/BlogSection';
 import ProductDetailPage from './components/ProductDetailPage';
@@ -42,6 +41,8 @@ const normalizeSavedCartItem = (item) => {
 };
 
 function App() {
+  const progressRef = useRef(null);
+
   const [searchState, setSearchState] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -68,10 +69,33 @@ function App() {
         selectedSlug: params.get('product'),
         currentView: params.get('view'),
       });
+      requestAnimationFrame(() => progressRef.current?.finish());
     };
 
+    // Intercept clicks on internal links to start progress bar
+    const handleLinkClick = (e) => {
+      const anchor = e.target.closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('tel:') || href.startsWith('mailto:') || href.startsWith('#') || anchor.target === '_blank') return;
+      progressRef.current?.start();
+    };
+
+    // Intercept pushState
+    const origPushState = window.history.pushState.bind(window.history);
+    window.history.pushState = (...args) => {
+      origPushState(...args);
+      updateSearchState();
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
     window.addEventListener('popstate', updateSearchState);
-    return () => window.removeEventListener('popstate', updateSearchState);
+
+    return () => {
+      window.history.pushState = origPushState;
+      document.removeEventListener('click', handleLinkClick, true);
+      window.removeEventListener('popstate', updateSearchState);
+    };
   }, []);
 
   useEffect(() => {
@@ -155,7 +179,7 @@ function App() {
 
   return (
     <div className="w-full min-h-screen bg-white font-body text-secondary selection:bg-primary selection:text-white">
-      <PageProgress />
+      <PageProgress progressRef={progressRef} />
       <Header
         forceVisible={forceHeaderVisible}
         solid={forceHeaderVisible}
