@@ -129,52 +129,129 @@ const buildRating = (sold, index) => {
   return Math.min(4.9, base + offset).toFixed(1);
 };
 
-export const transformProducts = (data) =>
-  data.map((rawItem, index) => {
-    const item = normalizeRecord(rawItem);
-    const category = item['Danh mục sản phẩm'] || 'Sản phẩm';
+// ── Group raw rows by Shopee ID, then transform each group into 1 product ──
+export const transformProducts = (data) => {
+  // 1. normalize all rows first
+  const normalized = data.map(normalizeRecord);
+
+  // 2. group by Shopee ID
+  const groups = {};
+  const order = []; // preserve insertion order
+  normalized.forEach((item, index) => {
+    const shopeeId = String(item['Mã ID Shopee'] || '').trim();
+    const key = shopeeId || `__solo_${index}`;
+    if (!groups[key]) {
+      groups[key] = [];
+      order.push(key);
+    }
+    groups[key].push({ item, originalIndex: index });
+  });
+
+  // 3. transform each group into 1 product
+  return order.map((key, groupIndex) => {
+    const rows = groups[key];
+    // representative row = first row (has name, description, category)
+    const { item: rep, originalIndex } = rows[0];
+
+    const category = rep['Danh mục sản phẩm'] || 'Sản phẩm';
     const categoryParts = category.split(' > ');
     const categoryName = categoryParts.at(-1) || category;
     const topCategory = categoryParts[0] || category;
-    const originalPrice = Number(item['Giá bán'] || 0);
-    const salePrice = Number(item['Giá khuyến mãi'] || 0);
-    const sold = Number(item['Đã Bán'] || 0);
-    const rawStock = item['Tồn kho'];
-    const stockValue = Number(rawStock);
-    const hasKnownStock =
-      rawStock !== null &&
-      rawStock !== undefined &&
-      rawStock !== '' &&
-      Number.isFinite(stockValue);
-    const stock = hasKnownStock ? Math.max(stockValue, 0) : 99;
-    const stockLabel = hasKnownStock ? `Còn ${stock.toLocaleString('vi-VN')}` : 'Có sẵn';
-    const displayPriceValue = salePrice && salePrice < originalPrice ? salePrice : originalPrice;
-    const compareAtPriceValue = salePrice && salePrice < originalPrice ? originalPrice : 0;
+
+    // aggregate sold & stock across all variant rows
+    const totalSold = rows.reduce((s, r) => s + Number(r.item['Đã Bán'] || 0), 0);
+    const totalStock = rows.reduce((s, r) => {
+      const v = Number(r.item['Tồn kho']);
+      return Number.isFinite(v) ? s + v : s;
+    }, 0);
+    const anyKnownStock = rows.some((r) => {
+      const v = r.item['Tồn kho'];
+      return v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+    });
+    const stock = anyKnownStock ? Math.max(totalStock, 0) : 99;
+    const stockLabel = anyKnownStock ? `Còn ${stock.toLocaleString('vi-VN')}` : 'Có sẵn';
+
+    // price: use lowest sale/display price across variants
+    const prices = rows.map((r) => {
+      const orig = Number(r.item['Giá bán'] || 0);
+      const sale = Number(r.item['Giá khuyến mãi'] || 0);
+      return sale && sale < orig ? sale : orig;
+    }).filter((p) => p > 0);
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxOrigPrice = rows.reduce((m, r) => Math.max(m, Number(r.item['Giá bán'] || 0)), 0);
+    const displayPriceValue = minPrice || maxOrigPrice;
+    const compareAtPriceValue = displayPriceValue < maxOrigPrice ? maxOrigPrice : 0;
+
     const discountPercent = compareAtPriceValue
       ? `-${Math.round(((compareAtPriceValue - displayPriceValue) / compareAtPriceValue) * 100)}%`
       : '';
-    const badge = item['Thẻ sản phẩm'] || discountPercent || 'Nổi bật';
-    const cleanDescription = stripHtml(item['Mô tả chi tiết'] || '');
-    const variants = buildVariants(item);
-    const variantLabel = buildVariantLabel(variants);
-    const shortDescription = makeShortDescription(item, cleanDescription);
-    const reviewCount = Math.max(8, Math.round((sold || 12) * 0.32));
+
+    const badge = rep['Thẻ sản phẩm'] || discountPercent || 'Nổi bật';
+    const cleanDescription = stripHtml(rep['Mô tả chi tiết'] || '');
+    const shortDescription = makeShortDescription(rep, cleanDescription);
+    const reviewCount = Math.max(8, Math.round((totalSold || 12) * 0.32));
 
     let badgeColor = 'bg-primary';
-    if (badge.includes('Hot') || badge.includes('Bán chạy') || discountPercent) {
-      badgeColor = 'bg-red-500';
-    } else if (badge.includes('Mới')) {
-      badgeColor = 'bg-teal-500';
-    } else if (badge.includes('Giảm')) {
-      badgeColor = 'bg-amber-500';
-    } else if (badge.includes('Yêu thích')) {
-      badgeColor = 'bg-rose-500';
-    }
+    if (badge.includes('Hot') || badge.includes('Bán chạy') || discountPercent) badgeColor = 'bg-red-500';
+    else if (badge.includes('Mới')) badgeColor = 'bg-teal-500';
+    else if (badge.includes('Giảm')) badgeColor = 'bg-amber-500';
+    else if (badge.includes('Yêu thích')) badgeColor = 'bg-rose-500';
+
+    // ── Build structured variant options ──
+    // Each row's non-ignored fields with values = its option combination
+    // e.g. row has {Mùi: "Sữa", Combo: "1 gói"} → option {attrs: {Mùi:"Sữa",Combo:"1 gói"}, price, stock, img}
+    const variantOptions = rows.map((r) => {
+      const attrs = {};
+      Object.entries(r.item).forEach(([k, v]) => {
+        if (VARIANT_IGNORE_KEYS.has(k)) return;
+        if (v === null || v === undefined || String(v).trim() === '') return;
+        if (String(v).trim().length > 80) return;
+        attrs[k] = String(v).trim();
+      });
+      const origP = Number(r.item['Giá bán'] || 0);
+      const saleP = Number(r.item['Giá khuyến mãi'] || 0);
+      const vPrice = saleP && saleP < origP ? saleP : origP;
+      const vOldPrice = saleP && saleP < origP ? origP : 0;
+      const vStock = r.item['Tồn kho'];
+      const vStockVal = Number(vStock);
+      return {
+        attrs,
+        price: vPrice,
+        priceFormatted: formatCurrency(vPrice),
+        oldPrice: vOldPrice,
+        oldPriceFormatted: vOldPrice ? formatCurrency(vOldPrice) : '',
+        stock: Number.isFinite(vStockVal) ? Math.max(vStockVal, 0) : 99,
+        img: r.item['Ảnh sản phẩm'] || rep['Ảnh sản phẩm'] || '/dog_about.png',
+      };
+    });
+
+    // Collect all unique option keys and their values
+    const optionKeys = [];
+    const optionValues = {}; // key => Set of values
+    variantOptions.forEach((vo) => {
+      Object.entries(vo.attrs).forEach(([k, v]) => {
+        if (!optionValues[k]) { optionKeys.push(k); optionValues[k] = new Set(); }
+        optionValues[k].add(v);
+      });
+    });
+    const variantGroups = optionKeys.map((k) => ({
+      name: k,
+      values: [...optionValues[k]],
+    }));
+
+    // legacy variants field (flat, first row only) for backward compat
+    const legacyVariants = buildVariants(rep);
+    const variantLabel = buildVariantLabel(legacyVariants);
+
+    // all images (deduplicated across variant rows)
+    const imgSet = new Set();
+    variantOptions.forEach((vo) => { if (vo.img) imgSet.add(vo.img); });
+    const images = [...imgSet].filter(Boolean);
 
     return {
-      id: `${index + 1}`,
-      slug: slugify(item['Tên sản phẩm *'] || `san-pham-${index + 1}`),
-      name: item['Tên sản phẩm *'] || `Sản phẩm ${index + 1}`,
+      id: `${groupIndex + 1}`,
+      slug: slugify(rep['Tên sản phẩm *'] || `san-pham-${groupIndex + 1}`),
+      name: rep['Tên sản phẩm *'] || `Sản phẩm ${groupIndex + 1}`,
       category: categoryName,
       topCategory,
       fullCategory: category,
@@ -184,26 +261,32 @@ export const transformProducts = (data) =>
       oldPriceValue: compareAtPriceValue,
       badge,
       badgeColor,
-      rating: buildRating(sold, index),
+      rating: buildRating(totalSold, groupIndex),
       reviews: reviewCount,
-      sold,
+      sold: totalSold,
       stock,
       stockLabel,
-      hasKnownStock,
-      img: item['Ảnh sản phẩm'] || '/dog_about.png',
+      hasKnownStock: anyKnownStock,
+      img: images[0] || '/dog_about.png',
+      images, // all unique images
       shortDescription,
       description: cleanDescription || shortDescription,
-      ingredients: buildIngredients(item, item['Mô tả chi tiết'] || '', variants),
-      feedingGuide: buildFeedingGuide(item['Mô tả chi tiết'] || ''),
-      variants,
+      ingredients: buildIngredients(rep, rep['Mô tả chi tiết'] || '', legacyVariants),
+      feedingGuide: buildFeedingGuide(rep['Mô tả chi tiết'] || ''),
+      // structured variants
+      variantGroups,   // [{name, values[]}]
+      variantOptions,  // [{attrs, price, stock, img}]
+      // legacy (for backward compat with cart)
+      variants: legacyVariants,
       variantLabel,
       defaultVariant: variantLabel ? { name: 'Phân loại', value: variantLabel } : null,
-      originalPrice: originalPrice || displayPriceValue,
+      originalPrice: maxOrigPrice || displayPriceValue,
       salePrice: displayPriceValue,
       discountPercent,
       isOnSale: Boolean(compareAtPriceValue),
     };
   });
+};
 
 export const products = transformProducts(productsData);
 
