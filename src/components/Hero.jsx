@@ -67,12 +67,12 @@ export default function Hero() {
 						3F STORE
 					</h1>
 
-					<p className="mt-5 max-w-[320px] text-sm leading-6 text-[#888] sm:text-[15px] sm:leading-7">
+					<p className="mt-2 max-w-[320px] text-sm leading-6 text-[#888] sm:text-[15px] sm:leading-7">
 						Hệ thống cửa hàng thú cưng hàng đầu Việt Nam. Cung cấp thú cảnh,
 						thức ăn, phụ kiện và dịch vụ dành cho thú cưng.
 					</p>
 
-					<div className="mt-8 flex items-center gap-4">
+					<div className="mt-3 flex items-center gap-4">
 						<a
 							href="#about"
 							className="inline-flex items-center justify-center rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(240,90,40,0.32)] transition-transform hover:-translate-y-0.5 active:scale-95"
@@ -95,7 +95,7 @@ export default function Hero() {
 					<svg
 						viewBox="0 0 200 200"
 						className="pointer-events-none absolute"
-						style={{ top: "-8%", right: "-2%", width: "46%", opacity: 0.55, zIndex: 0 }}
+						style={{ top: "-8%", right: "-2%", width: "66%", opacity: 0.55, zIndex: 0 }}
 						aria-hidden="true"
 					>
 						<path d={BLOB_BG} transform="translate(100 100)" fill="#E8E5E1" />
@@ -110,7 +110,6 @@ export default function Hero() {
 					>
 						<path d={BLOB_ORANGE} transform="translate(100 100)" fill="#F05A28" />
 					</svg>
-
 					{/* Blob ảnh chính */}
 					<svg
 						viewBox="0 0 200 200"
@@ -119,20 +118,32 @@ export default function Hero() {
 						style={{
 							zIndex: 1,
 							filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.12))",
+							
+							// CÁCH 1: Dùng transform scale (Khuyên dùng)
+							// Thay đổi giá trị 1.25 lên 1.3, 1.4... tùy theo độ lớn bạn muốn
+							transform: "scale(1.25)", 
+							
+							// Giữ nguyên hoặc tăng nhẹ margin âm để tạo không gian
 							marginLeft: "-80px",
 							marginRight: "-80px",
 							width: "calc(100% + 160px)",
 						}}
-					>
+					>	
 						<defs>
-							<clipPath id="heroBlobClip">
-								<path d={BLOB_MAIN} transform="translate(100 100)" />
-							</clipPath>
+        				<clipPath id="heroBlobClip">
+           			 		{/* Bạn cũng có thể phóng to riêng cái viền cắt bằng cách thêm scale vào transform */}
+           				 	{/* Ví dụ: transform="translate(100 100) scale(1.1)" */}
+         	 				<path d={BLOB_MAIN} transform="translate(100 100)" />
+        				</clipPath>
 						</defs>
 						<image
-							href="/petnow_hero_store.png"
-							x="0" y="0"
-							width="200" height="200"
+							href="nice.png"
+							x="34" 
+        					y="15"
+							// QUAN TRỌNG: Đã sửa width từ 150 -> 200 để ảnh phủ kín viewBox 200x200
+							width="130" 
+							height="200"
+							className=""
 							preserveAspectRatio="xMidYMid slice"
 							clipPath="url(#heroBlobClip)"
 						/>
