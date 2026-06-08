@@ -77,43 +77,10 @@ export default function ProductCatSection({
               <ProductCard key={product.slug} product={product} onAddToCart={onAddToCart} />
             ))}
           </div>
-
-          {/* Nút Xem thêm với chó chạy vòng quanh */}
-          <div className="mt-6 flex justify-center">
-            <div className="relative inline-flex items-center justify-center">
-              {/* Con chó chạy vòng quanh — orbit animation */}
-              <img
-                src="/dogrungif-ezgif.com-gif-maker.gif"
-                alt=""
-                aria-hidden="true"
-                className="pointer-events-none absolute"
-                style={{
-                  width: 36,
-                  height: 36,
-                  objectFit: 'contain',
-                  animation: 'dogOrbit 3s linear infinite',
-                  transformOrigin: '50% 50%',
-                }}
-              />
-
-              <style>{`
-                @keyframes dogOrbit {
-                  0%   { transform: rotate(0deg)   translateX(54px) rotate(0deg); }
-                  25%  { transform: rotate(90deg)  translateX(54px) rotate(-90deg); }
-                  50%  { transform: rotate(180deg) translateX(54px) rotate(-180deg); }
-                  75%  { transform: rotate(270deg) translateX(54px) rotate(-270deg); }
-                  100% { transform: rotate(360deg) translateX(54px) rotate(-360deg); }
-                }
-              `}</style>
-
-              <a
-                href={viewMoreHref}
-                className="relative z-10 rounded-full border-2 border-primary bg-white px-6 py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                Xem thêm
-              </a>
-            </div>
-          </div>
+          <a href={viewMoreHref}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary bg-white py-3 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white">
+            Xem thêm
+          </a>
         </div>
 
         {/* ── Desktop: slider ── */}

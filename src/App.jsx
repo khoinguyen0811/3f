@@ -10,6 +10,7 @@ import ProductDetailPage from './components/ProductDetailPage';
 import ProductCatalogPage from './components/ProductCatalogPage';
 import CartCheckoutDrawer from './components/CartCheckoutDrawer';
 import Footer from './components/Footer';
+import PageProgress from './components/PageProgress';
 import {
   getCatProducts,
   getDogProducts,
@@ -154,6 +155,7 @@ function App() {
 
   return (
     <div className="w-full min-h-screen bg-white font-body text-secondary selection:bg-primary selection:text-white">
+      <PageProgress />
       <Header
         forceVisible={forceHeaderVisible}
         solid={forceHeaderVisible}
