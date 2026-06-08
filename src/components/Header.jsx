@@ -139,7 +139,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
         <span className="bg-[#62B44B]" />
       </div>
 
-      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center gap-2 px-3 sm:px-6 lg:px-10 xl:px-12">
+      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center gap-2 px-3 sm:px-6 lg:px-10 xl:px-12 justify-between">
 
         {/* Logo */}
         <a href="/" className="flex shrink-0 items-center" aria-label="3F Store">
@@ -232,7 +232,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-primary">
               <PhoneIcon />
             </span>
-            <span className="hidden xl:inline">0869.224.692</span>
+            <span className="xl:inline">0869.224.692</span>
           </a>
 
           {/* Cart */}

@@ -10,7 +10,7 @@ const benefitRows = [
   { title: 'Đổi trả miễn phí', value: 'Trong 7 ngày' },
   { title: '100% chính hãng', value: '200+ thương hiệu' },
 ];
-
+            
 const reviewTemplates = [
   { name: 'Minh Anh', date: '12/05/2026', title: 'Sản phẩm đúng mô tả', content: 'Đóng gói chắc tay, giao nhanh và bé dùng hợp ngay từ lần đầu.' },
   { name: 'Quốc Huy', date: '28/04/2026', title: 'Mua lại lần thứ hai', content: 'Giá ổn, date mới và shop tư vấn khá kỹ trước khi chốt đơn.' },
