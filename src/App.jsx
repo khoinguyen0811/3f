@@ -128,6 +128,10 @@ function App() {
         },
       ];
     });
+  };
+
+  const buyNow = (product, options = {}) => {
+    addToCart(product, options);
     setIsCartOpen(true);
   };
 
@@ -162,7 +166,7 @@ function App() {
           key={selectedProduct.slug}
           product={selectedProduct}
           onAddToCart={addToCart}
-          onBuyNow={addToCart}
+          onBuyNow={buyNow}
         />
       ) : isCatalogView ? (
         <ProductCatalogPage onAddToCart={addToCart} />

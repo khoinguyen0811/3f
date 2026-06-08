@@ -95,17 +95,17 @@ export default function Hero() {
 					<svg
 						viewBox="0 0 200 200"
 						className="pointer-events-none absolute"
-						style={{ top: "-18%", right: "-10%", width: "52%", opacity: 0.55, zIndex: 0 }}
+						style={{ top: "-8%", right: "-2%", width: "46%", opacity: 0.55, zIndex: 0 }}
 						aria-hidden="true"
 					>
 						<path d={BLOB_BG} transform="translate(100 100)" fill="#E8E5E1" />
 					</svg>
 
-					{/* Blob orange — kiri atas blob ảnh */}
+					{/* Blob orange — sát mép trái blob ảnh */}
 					<svg
 						viewBox="0 0 200 200"
 						className="pointer-events-none absolute"
-						style={{ left: "4%", top: "16%", width: "9%", zIndex: 3 }}
+						style={{ left: "12%", top: "26%", width: "8%", zIndex: 3 }}
 						aria-hidden="true"
 					>
 						<path d={BLOB_ORANGE} transform="translate(100 100)" fill="#F05A28" />
@@ -138,21 +138,21 @@ export default function Hero() {
 						/>
 					</svg>
 
-					{/* Blob teal — dưới phải */}
+					{/* Blob teal — sát mép dưới phải blob ảnh */}
 					<svg
 						viewBox="0 0 200 200"
 						className="pointer-events-none absolute"
-						style={{ bottom: "-6%", right: "2%", width: "20%", zIndex: 2 }}
+						style={{ bottom: "2%", right: "6%", width: "18%", zIndex: 2 }}
 						aria-hidden="true"
 					>
 						<path d={BLOB_TEAL} transform="translate(100 100)" fill="#0796A8" />
 					</svg>
 
-					{/* Blob vàng — dưới phải nhỏ hơn */}
+					{/* Blob vàng — sát cạnh teal */}
 					<svg
 						viewBox="0 0 200 200"
 						className="pointer-events-none absolute"
-						style={{ bottom: "-10%", right: "18%", width: "9%", zIndex: 2 }}
+						style={{ bottom: "-2%", right: "21%", width: "8%", zIndex: 2 }}
 						aria-hidden="true"
 					>
 						<path d={BLOB_YELLOW} transform="translate(100 100)" fill="#F5C518" />
