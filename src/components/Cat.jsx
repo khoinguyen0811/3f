@@ -2,6 +2,87 @@ import { useEffect, useState } from 'react';
 import { getFeaturedProducts } from '../data/products';
 import ProductCard from './ProductCard';
 
+// ── CTA Button với hiệu ứng hover từ snippet ────────────────────────────────
+const ViewMoreBtn = ({ href, label = 'Xem thêm' }) => (
+  <a
+    href={href}
+    style={{
+      position: 'relative',
+      display: 'inline-flex',
+      alignItems: 'center',
+      margin: 'auto',
+      padding: '12px 18px',
+      transition: 'all 0.2s ease',
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      textDecoration: 'none',
+    }}
+    className="cta-viewmore group"
+  >
+    <style>{`
+      .cta-viewmore::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        display: block;
+        border-radius: 50px;
+        background: #FDDCCC;
+        width: 45px;
+        height: 45px;
+        transition: all 0.3s ease;
+      }
+      .cta-viewmore:hover::before {
+        width: 100%;
+        background: #FDDCCC;
+      }
+      .cta-viewmore:active {
+        transform: scale(0.95);
+      }
+      .cta-viewmore .cta-arrow {
+        transform: translateX(-5px);
+        transition: all 0.3s ease;
+      }
+      .cta-viewmore:hover .cta-arrow {
+        transform: translateX(0);
+      }
+    `}</style>
+
+    <span style={{
+      position: 'relative',
+      fontFamily: 'inherit',
+      fontSize: 16,
+      fontWeight: 700,
+      letterSpacing: '0.05em',
+      color: '#F05A28',
+    }}>
+      {label}
+    </span>
+
+    <svg
+      className="cta-arrow"
+      style={{
+        position: 'relative',
+        marginLeft: 10,
+        fill: 'none',
+        stroke: '#F05A28',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        strokeWidth: 2,
+      }}
+      width="15px"
+      height="10px"
+      viewBox="0 0 13 10"
+      aria-hidden="true"
+    >
+      <path d="M1,5 L11,5" />
+      <polyline points="8 1 12 5 8 9" />
+    </svg>
+  </a>
+);
+
 const Stars = ({ rating }) => (
   <div className="flex items-center gap-0.5">
     {[...Array(5)].map((_, i) => (
@@ -77,10 +158,9 @@ export default function ProductCatSection({
               <ProductCard key={product.slug} product={product} onAddToCart={onAddToCart} />
             ))}
           </div>
-          <a href={viewMoreHref}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary bg-white py-3 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white">
-            Xem thêm
-          </a>
+          <div className="mt-4 flex justify-center">
+            <ViewMoreBtn href={viewMoreHref} />
+          </div>
         </div>
 
         {/* ── Desktop: slider ── */}
@@ -146,6 +226,10 @@ export default function ProductCatSection({
                 aria-label={`Slide ${i + 1}`}
                 className={`h-3 rounded-full transition-all ${i === activeIndex ? 'w-8 bg-primary' : 'w-3 bg-gray-300'}`} />
             ))}
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <ViewMoreBtn href={viewMoreHref} />
           </div>
         </div>
 
