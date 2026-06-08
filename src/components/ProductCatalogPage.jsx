@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAllProducts, getCatalogMeta } from '../data/products';
 
 const sortOptions = [
@@ -282,6 +282,9 @@ export default function ProductCatalogPage({ onAddToCart }) {
     sortBy,
   ]);
 
+  const MOBILE_PAGE_SIZE = 6;
+  const [mobileCount, setMobileCount] = useState(MOBILE_PAGE_SIZE);
+
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
   const activePage = Math.min(currentPage, totalPages);
   const paginationItems = useMemo(
@@ -293,6 +296,17 @@ export default function ProductCatalogPage({ onAddToCart }) {
     return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
   }, [activePage, filteredProducts]);
 
+  // mobile load-more list (resets when filters change)
+  const mobileProducts = useMemo(
+    () => filteredProducts.slice(0, mobileCount),
+    [filteredProducts, mobileCount],
+  );
+
+  // reset mobile count khi filter thay đổi
+  useEffect(() => {
+    setMobileCount(MOBILE_PAGE_SIZE);
+  }, [filteredProducts]);
+
   const clearFilters = () => {
     setQuery('');
     setSelectedCategories([]);
@@ -303,6 +317,7 @@ export default function ProductCatalogPage({ onAddToCart }) {
     setShowOnSaleOnly(false);
     setMinRating(0);
     setCurrentPage(1);
+    setMobileCount(MOBILE_PAGE_SIZE);
   };
 
   return (
@@ -487,137 +502,205 @@ export default function ProductCatalogPage({ onAddToCart }) {
             </div>
 
             <div className="mb-5 flex items-center justify-between text-sm text-muted">
-              <span>
+              {/* desktop: trang x/y | mobile: tổng sản phẩm */}
+              <span className="hidden sm:inline">
                 Trang {activePage}/{totalPages}
               </span>
+              <span className="sm:hidden">
+                {filteredProducts.length} sản phẩm
+              </span>
               <span>
-                Hiển thị {(activePage - 1) * PRODUCTS_PER_PAGE + 1}
-                {' - '}
-                {Math.min(activePage * PRODUCTS_PER_PAGE, filteredProducts.length)}
-                {' / '}
+                Hiển thị {' '}
+                <span className="hidden sm:inline">
+                  {(activePage - 1) * PRODUCTS_PER_PAGE + 1}
+                  {' - '}
+                  {Math.min(activePage * PRODUCTS_PER_PAGE, filteredProducts.length)}
+                  {' / '}
+                </span>
                 {filteredProducts.length} sản phẩm
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {paginatedProducts.map((product) => (
-                <article
-                  key={product.slug}
-                  className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
-                >
-                  <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
-                    <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
-                      {product.badge}
-                    </span>
-                    {product.discountPercent ? (
-                      <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
-                        {product.discountPercent}
+            {/* ── Mobile: load-more list ── */}
+            <div className="sm:hidden">
+              <div className="grid grid-cols-1 gap-5">
+                {mobileProducts.map((product) => (
+                  <article
+                    key={product.slug}
+                    className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
+                      <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
+                        {product.badge}
                       </span>
-                    ) : null}
-                  </a>
-
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                        {product.category}
-                      </span>
-                      <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
-                    </div>
-
-                    <a href={`/?product=${product.slug}`}>
-                      <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
-                        {product.name}
-                      </h3>
+                      {product.discountPercent ? (
+                        <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
+                          {product.discountPercent}
+                        </span>
+                      ) : null}
                     </a>
-
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">
-                      {product.shortDescription}
-                    </p>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <div>
-                        <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
-                        {product.oldPrice ? (
-                          <div className="text-sm text-muted line-through">{product.oldPrice}</div>
-                        ) : null}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</span>
+                        <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
                       </div>
-                      <div className="text-right text-sm text-muted">
-                        <div>{product.stockLabel}</div>
-                        <div className="mt-1 flex items-center justify-end gap-2">
-                          <Stars rating={product.rating} />
-                          <span>({product.reviews})</span>
+                      <a href={`/?product=${product.slug}`}>
+                        <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
+                          {product.name}
+                        </h3>
+                      </a>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div>
+                          <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
+                          {product.oldPrice ? <div className="text-sm text-muted line-through">{product.oldPrice}</div> : null}
+                        </div>
+                        <div className="text-right text-sm text-muted">
+                          <div>{product.stockLabel}</div>
+                          <div className="mt-1 flex items-center justify-end gap-2">
+                            <Stars rating={product.rating} />
+                            <span>({product.reviews})</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+                        <button
+                          type="button"
+                          onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
+                          disabled={product.stock <= 0}
+                          className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Thêm giỏ
+                        </button>
+                        <a
+                          href={`/?product=${product.slug}`}
+                          className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
+                        >
+                          Chi tiết
+                        </a>
+                      </div>
                     </div>
+                  </article>
+                ))}
+              </div>
 
-                    <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
-                      <button
-                        type="button"
-                        onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
-                        disabled={product.stock <= 0}
-                        className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Thêm giỏ
-                      </button>
-                      <a
-                        href={`/?product=${product.slug}`}
-                        className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
-                      >
-                        Chi tiết
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              ))}
+              {mobileCount < filteredProducts.length && (
+                <button
+                  type="button"
+                  onClick={() => setMobileCount((c) => c + MOBILE_PAGE_SIZE)}
+                  className="mt-6 w-full rounded-full border-2 border-primary bg-white py-4 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  Xem thêm ({Math.min(MOBILE_PAGE_SIZE, filteredProducts.length - mobileCount)} sản phẩm)
+                </button>
+              )}
+              {mobileCount >= filteredProducts.length && filteredProducts.length > MOBILE_PAGE_SIZE && (
+                <p className="mt-6 text-center text-sm text-muted">Đã hiển thị tất cả {filteredProducts.length} sản phẩm</p>
+              )}
             </div>
 
-            {filteredProducts.length > 0 && totalPages > 1 && (
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, activePage - 1))}
-                  disabled={activePage === 1}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Trước
-                </button>
-
-                {paginationItems.map((item) => {
-                  if (typeof item === 'string') {
-                    return (
-                      <span
-                        key={item}
-                        className="flex h-10 min-w-10 items-center justify-center px-1 text-sm font-bold text-muted"
-                      >
-                        ...
+            {/* ── Desktop: pagination ── */}
+            <div className="hidden sm:block">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {paginatedProducts.map((product) => (
+                  <article
+                    key={product.slug}
+                    className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                  >
+                    <a href={`/?product=${product.slug}`} className="relative block aspect-square overflow-hidden bg-gray-50">
+                      <img src={product.img} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white ${product.badgeColor}`}>
+                        {product.badge}
                       </span>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={item}
-                      onClick={() => setCurrentPage(item)}
-                      className={`h-10 min-w-10 rounded-full px-3 text-sm font-bold transition-colors ${
-                        activePage === item
-                          ? 'bg-primary text-white'
-                          : 'bg-white text-secondary hover:text-primary'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, activePage + 1))}
-                  disabled={activePage === totalPages}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Sau
-                </button>
+                      {product.discountPercent ? (
+                        <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">
+                          {product.discountPercent}
+                        </span>
+                      ) : null}
+                    </a>
+                    <div className="p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</span>
+                        <span className="text-xs text-muted">Đã bán {product.sold.toLocaleString('vi-VN')}</span>
+                      </div>
+                      <a href={`/?product=${product.slug}`}>
+                        <h3 className="mt-2 line-clamp-2 font-display text-xl font-extrabold text-secondary transition-colors hover:text-primary">
+                          {product.name}
+                        </h3>
+                      </a>
+                      <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">{product.shortDescription}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div>
+                          <div className="font-display text-2xl font-extrabold text-primary">{product.price}</div>
+                          {product.oldPrice ? <div className="text-sm text-muted line-through">{product.oldPrice}</div> : null}
+                        </div>
+                        <div className="text-right text-sm text-muted">
+                          <div>{product.stockLabel}</div>
+                          <div className="mt-1 flex items-center justify-end gap-2">
+                            <Stars rating={product.rating} />
+                            <span>({product.reviews})</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+                        <button
+                          type="button"
+                          onClick={() => onAddToCart?.(product, { variant: product.defaultVariant })}
+                          disabled={product.stock <= 0}
+                          className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Thêm giỏ
+                        </button>
+                        <a
+                          href={`/?product=${product.slug}`}
+                          className="inline-flex items-center justify-center rounded-full border border-secondary/15 bg-white px-5 py-3 text-sm font-extrabold text-secondary transition-colors hover:border-primary hover:text-primary"
+                        >
+                          Chi tiết
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
-            )}
+
+              {filteredProducts.length > 0 && totalPages > 1 && (
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, activePage - 1))}
+                    disabled={activePage === 1}
+                    className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Trước
+                  </button>
+                  {paginationItems.map((item) => {
+                    if (typeof item === 'string') {
+                      return (
+                        <span key={item} className="flex h-10 min-w-10 items-center justify-center px-1 text-sm font-bold text-muted">
+                          ...
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={item}
+                        onClick={() => setCurrentPage(item)}
+                        className={`h-10 min-w-10 rounded-full px-3 text-sm font-bold transition-colors ${
+                          activePage === item ? 'bg-primary text-white' : 'bg-white text-secondary hover:text-primary'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, activePage + 1))}
+                    disabled={activePage === totalPages}
+                    className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-secondary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
+            </div>
 
             {filteredProducts.length === 0 && (
               <div className="rounded-[26px] bg-white p-10 text-center shadow-[0_18px_44px_rgba(31,41,55,0.06)]">

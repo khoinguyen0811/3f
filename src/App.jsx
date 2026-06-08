@@ -175,7 +175,6 @@ function App() {
           <Hero />
           <About />
           <HorizontalBanners />
-          <Services />
           <ProductCatSection
             anchorId="products"
             title="Sản phẩm cho chó"

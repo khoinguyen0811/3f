@@ -76,7 +76,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
       <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10 xl:px-12">
         <a href="/" className="flex shrink-0 items-center" aria-label="3F Store">
           <img
-            src="/src/assets/logo (1).png"
+            src="/logo-3f.png"
             alt="3F Store"
             className="h-auto w-[118px] object-contain sm:w-[136px]"
           />
