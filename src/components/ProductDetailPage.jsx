@@ -26,6 +26,14 @@ const tabLabels = [
 const formatTabContent = (content) =>
   (content || '').split('\n').map((line) => line.trim()).filter(Boolean);
 
+const buildDefaultAttrs = (variantGroups = []) => {
+  const defaults = {};
+  variantGroups.forEach(({ name, values }) => {
+    defaults[name] = values[0];
+  });
+  return defaults;
+};
+
 // Find the best matching variantOption given current attr selections
 const findMatchingOption = (variantOptions, selectedAttrs) => {
   if (!variantOptions || variantOptions.length === 0) return null;
@@ -46,23 +54,13 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
-  const [selectedAttrs, setSelectedAttrs] = useState({});
+  const variantGroups = useMemo(() => product.variantGroups || [], [product.variantGroups]);
+  const variantOptions = useMemo(() => product.variantOptions || [], [product.variantOptions]);
+  const [selectedAttrs, setSelectedAttrs] = useState(() => buildDefaultAttrs(variantGroups));
   const stickyRef = useRef(null);
   const [showSticky, setShowSticky] = useState(false);
 
   const relatedProducts = useMemo(() => getRelatedProducts(product, 4), [product]);
-
-  const variantGroups = product.variantGroups || [];
-  const variantOptions = product.variantOptions || [];
-
-  // init default selections
-  useEffect(() => {
-    const defaults = {};
-    variantGroups.forEach(({ name, values }) => { defaults[name] = values[0]; });
-    setSelectedAttrs(defaults);
-    setActiveImg(0);
-    setQuantity(1);
-  }, [product.slug]);
 
   const matchedOption = useMemo(
     () => findMatchingOption(variantOptions, selectedAttrs),
@@ -86,7 +84,7 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
     return [...imgs].filter(Boolean);
   }, [matchedOption, product.images, product.img]);
 
-  useEffect(() => { setActiveImg(0); }, [images[0]]);
+  const activeImageIndex = Math.min(activeImg, Math.max(images.length - 1, 0));
 
   // sticky bar
   useEffect(() => {
@@ -167,7 +165,7 @@ export default function ProductDetailPage({ product, onAddToCart, onBuyNow }) {
           <div className="flex flex-col gap-3">
             <div className="overflow-hidden rounded-[24px] bg-[#FFF6ED]">
               <img
-                src={images[activeImg] || '/dog_about.png'}
+                src={images[activeImageIndex] || '/dog_about.png'}
                 alt={product.name}
                 className="aspect-square w-full object-cover"
                 onError={(e) => { e.target.src = '/dog_about.png'; }}

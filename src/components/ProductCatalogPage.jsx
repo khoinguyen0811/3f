@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getAllProducts, getCatalogMeta } from '../data/products';
 import ProductCard from './ProductCard';
 
@@ -295,11 +295,6 @@ export default function ProductCatalogPage({ onAddToCart }) {
     () => filteredProducts.slice(0, mobileCount),
     [filteredProducts, mobileCount],
   );
-
-  // reset mobile count khi filter thay đổi
-  useEffect(() => {
-    setMobileCount(MOBILE_PAGE_SIZE);
-  }, [filteredProducts]);
 
   const clearFilters = () => {
     setQuery('');

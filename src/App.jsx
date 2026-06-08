@@ -8,6 +8,7 @@ import BlogSection from './components/BlogSection';
 import ProductDetailPage from './components/ProductDetailPage';
 import ProductCatalogPage from './components/ProductCatalogPage';
 import CartCheckoutDrawer from './components/CartCheckoutDrawer';
+import AuthPage from './components/AuthPage';
 import Footer from './components/Footer';
 import {
   getCatProducts,
@@ -95,7 +96,8 @@ function App() {
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const isCatalogView = searchState.currentView === 'products';
-  const forceHeaderVisible = Boolean(selectedProduct) || isCatalogView || isCartOpen;
+  const isAuthView = searchState.currentView === 'auth';
+  const forceHeaderVisible = Boolean(selectedProduct) || isCatalogView || isAuthView || isCartOpen;
 
   const addToCart = (product, options = {}) => {
     const variant = options.variant || product.defaultVariant || null;
@@ -169,6 +171,8 @@ function App() {
         />
       ) : isCatalogView ? (
         <ProductCatalogPage onAddToCart={addToCart} />
+      ) : isAuthView ? (
+        <AuthPage cartCount={cartCount} onCartOpen={() => setIsCartOpen(true)} />
       ) : (
         <>
           <Hero />
@@ -206,7 +210,7 @@ function App() {
         onClearCart={() => setCartItems([])}
       />
 
-      <Footer />
+      {!isAuthView ? <Footer /> : null}
     </div>
   );
 }

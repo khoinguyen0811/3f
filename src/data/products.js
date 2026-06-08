@@ -144,14 +144,14 @@ export const transformProducts = (data) => {
       groups[key] = [];
       order.push(key);
     }
-    groups[key].push({ item, originalIndex: index });
+    groups[key].push({ item });
   });
 
   // 3. transform each group into 1 product
   return order.map((key, groupIndex) => {
     const rows = groups[key];
     // representative row = first row (has name, description, category)
-    const { item: rep, originalIndex } = rows[0];
+    const { item: rep } = rows[0];
 
     const category = rep['Danh mục sản phẩm'] || 'Sản phẩm';
     const categoryParts = category.split(' > ');

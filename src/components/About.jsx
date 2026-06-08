@@ -5,76 +5,111 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 const coupons = [
-  { code: 'PETLOVE10', desc: 'Giảm 10% toàn bộ đơn hàng', color: 'bg-primary', light: 'bg-primary/8', emoji: '🎁' },
-  { code: 'FREESHIP', desc: 'Freeship toàn quốc', color: 'bg-[#0796A8]', light: 'bg-[#0796A8]/8', emoji: '🚚' },
-  { code: 'BOSS20', desc: 'Giảm 20% cho đơn từ 500k', color: 'bg-amber-500', light: 'bg-amber-50', emoji: '⭐' },
-  { code: 'NEWPET', desc: 'Khách mới giảm 15%', color: 'bg-emerald-500', light: 'bg-emerald-50', emoji: '🐾' },
-  { code: 'SUMMER30', desc: 'Deal hè giảm 30% snack', color: 'bg-rose-500', light: 'bg-rose-50', emoji: '☀️' },
-  { code: 'COMBO50', desc: 'Mua combo tiết kiệm 50k', color: 'bg-violet-500', light: 'bg-violet-50', emoji: '🛍️' },
+  { code: 'PV5999K', title: '5% off', min: 'Min 999K' },
+  { code: 'SENMOI', title: '50.000đ off', min: 'Min 399K', defaultSaved: true },
+  { code: 'FREESHIP25K', title: '25.000đ off shipping', min: 'Min 300K' },
+  { code: 'BOSS10K', title: '10.000đ off', min: 'Min 100K' },
+  { code: '20KSNACK', title: '20.000đ off', min: 'Min 150K' },
 ];
 
-function CouponSlider() {
-  const [copied, setCopied] = useState(null);
-  const [showAll, setShowAll] = useState(false);
+const TicketIcon = () => (
+  <svg className="h-6 w-6 text-[#FF3E44]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M4 5.25A2.25 2.25 0 0 1 6.25 3h11.5A2.25 2.25 0 0 1 20 5.25v3.08a2.17 2.17 0 0 0 0 4.34v3.08A2.25 2.25 0 0 1 17.75 18H6.25A2.25 2.25 0 0 1 4 15.75v-3.08a2.17 2.17 0 0 0 0-4.34V5.25Zm8.25-.5a.75.75 0 0 0-.75.75v2a.75.75 0 0 0 1.5 0v-2a.75.75 0 0 0-.75-.75Zm0 5a.75.75 0 0 0-.75.75v3a.75.75 0 0 0 1.5 0v-3a.75.75 0 0 0-.75-.75Zm0 6a.75.75 0 0 0-.75.75v2a.75.75 0 0 0 1.5 0v-2a.75.75 0 0 0-.75-.75Z" />
+  </svg>
+);
 
-  const handleCopy = (code) => {
+function CouponSlider() {
+  const [showAll, setShowAll] = useState(false);
+  const [savedCoupons, setSavedCoupons] = useState(() =>
+    new Set(coupons.filter((coupon) => coupon.defaultSaved).map((coupon) => coupon.code)),
+  );
+
+  const handleSave = (code) => {
     navigator.clipboard?.writeText(code).catch(() => {});
-    setCopied(code);
-    setTimeout(() => setCopied(null), 2000);
+    setSavedCoupons((current) => {
+      const next = new Set(current);
+      next.add(code);
+      return next;
+    });
+    window.location.assign('/?view=auth');
   };
 
   const visibleCoupons = showAll ? coupons : coupons.slice(0, 4);
 
   return (
-    <div className="about-anim rounded-[32px] bg-gray-50 border border-gray-100 p-6 sm:p-8">
-      <div className="mb-5 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-primary">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-        </svg>
-        <h3 className="font-display text-lg font-extrabold text-secondary sm:text-xl">Mã giảm giá dành cho bạn</h3>
-      </div>
-
-      {/* Grid: mobile 1col, desktop 2col */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {visibleCoupons.map((cur) => (
-          <div
-            key={cur.code}
-            className={`${cur.light} relative overflow-hidden rounded-2xl p-4`}
-          >
-            {/* Big emoji bg */}
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-[60px] opacity-10">
-              {cur.emoji}
-            </span>
-
-            <p className="text-xs font-semibold text-muted">{cur.desc}</p>
-            <p className={`mt-0.5 font-display text-xl font-black tracking-widest ${cur.color.replace('bg-', 'text-')}`}>
-              {cur.code}
-            </p>
-
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="text-[10px] text-muted">Áp dụng có điều kiện</p>
-              <button
-                type="button"
-                onClick={() => handleCopy(cur.code)}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95 ${cur.color}`}
-              >
-                {copied === cur.code ? '✓ Đã chép!' : 'Sao chép'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile: xem thêm nếu chưa show all */}
-      {!showAll && coupons.length > 4 && (
+    <div className="about-anim bg-white py-4 sm:rounded-[28px] sm:border sm:border-gray-100 sm:p-6">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <TicketIcon />
+          <h3 className="font-display text-[22px] font-extrabold leading-none text-[#11204A] sm:text-2xl">
+            Coupons
+          </h3>
+        </div>
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="mt-4 w-full rounded-full border-2 border-primary bg-white py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white sm:hidden"
+          className="inline-flex items-center gap-2 text-sm font-medium text-primary sm:text-base"
         >
-          Xem thêm ({coupons.length - 4} mã nữa)
+          See more
+          <span className="text-xl leading-none">→</span>
         </button>
-      )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+        {visibleCoupons.map((cur) => (
+          <article
+            key={cur.code}
+            className="flex min-h-[158px] flex-col rounded-[18px] border border-primary border-dashed bg-white px-3 py-3 sm:min-h-[170px] sm:rounded-[20px] sm:px-4"
+          >
+            <h4 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-[#FF3E44] sm:text-xl">
+              {cur.title}
+            </h4>
+            <p className="mt-2 text-[10px] font-medium text-[#3E4A72] sm:text-sm">{cur.min}</p>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span className="rounded-[5px] bg-[#fff4e9] px-2 py-1 text-[8px] font-extrabold text-[#111947]">
+                {cur.code}
+              </span>
+              <span className="rounded-[5px] border border-[#ffcb8fac] px-2 py-1 text-[8px] font-medium text-[#ff7700]">
+                Store-wide
+              </span>
+            </div>
+
+            <div className="mt-3 border-t border-dashed border-[#D7DCEB]" />
+
+            <div className="mt-auto flex items-end justify-between pt-3">
+              <span className="text-sm leading-none text-[#11204A]">∞</span>
+              {savedCoupons.has(cur.code) ? (
+                <button
+                  type="button"
+                  onClick={() => handleSave(cur.code)}
+                  className="rounded-full bg-[#ffc37f] px-2 py-1 text-[10px] font-extrabold text-[#ffffff] transition-transform active:scale-95"
+                >
+                  Saved
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSave(cur.code)}
+                  className="rounded-full bg-[#ff5c0a] px-2 py-1 text-[11px] font-extrabold text-white transition-transform active:scale-95"
+                >
+                  Save
+                </button>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {!showAll && coupons.length > 4 ? (
+        <button
+          type="button"
+            onClick={() => setShowAll(true)}
+            className="mt-4 w-full rounded-full border border-[#ebdad7] bg-white py-3 text-sm font-extrabold text-primary sm:hidden"
+        >
+          Xem thêm mã 
+        </button>
+      ) : null}
     </div>
   );
 }

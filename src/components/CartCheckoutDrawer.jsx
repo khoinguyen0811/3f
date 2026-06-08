@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   buildShopeeExpressShipmentPayload,
   createShopeeExpressShipment,
@@ -25,7 +25,9 @@ const loadSavedCustomer = () => {
   try {
     const saved = JSON.parse(localStorage.getItem(CUSTOMER_STORAGE_KEY) || 'null');
     if (saved && typeof saved === 'object') return { ...emptyCustomer, ...saved };
-  } catch {}
+  } catch {
+    return emptyCustomer;
+  }
   return emptyCustomer;
 };
 
@@ -179,7 +181,11 @@ function CheckoutStep({ items, subtotal, total, shippingQuote, onBack, onClearCa
     setCustomer((c) => {
       const updated = { ...c, [field]: value };
       // persist to localStorage for autofill next time
-      try { localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+      try {
+        localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // Local storage can be unavailable in restricted browser contexts.
+      }
       return updated;
     });
   };
@@ -387,21 +393,22 @@ function CheckoutStep({ items, subtotal, total, shippingQuote, onBack, onClearCa
 export default function CartCheckoutDrawer({ isOpen, items, onClose, onUpdateQuantity, onRemoveItem, onClearCart }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout'
 
-  // Reset to cart step when drawer closes
-  useEffect(() => { if (!isOpen) setStep('cart'); }, [isOpen]);
-
   const itemCount = useMemo(() => items.reduce((s, i) => s + i.quantity, 0), [items]);
   const subtotal = useMemo(() => items.reduce((s, i) => s + i.product.priceValue * i.quantity, 0), [items]);
   const shippingQuote = useMemo(() => getShopeeExpressQuote({ subtotal }), [subtotal]);
-  const codFee = step === 'checkout' ? 0 : shippingQuote.codFee; // will be recalculated in checkout
   const total = subtotal + shippingQuote.fee;
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    setStep('cart');
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[90]">
       {/* Backdrop */}
-      <button type="button" aria-label="Đóng giỏ hàng" className="absolute inset-0 bg-black/45" onClick={onClose} />
+      <button type="button" aria-label="Đóng giỏ hàng" className="absolute inset-0 bg-black/45" onClick={handleClose} />
 
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[520px] flex-col bg-[#FFF9F4] shadow-[-24px_0_70px_rgba(31,41,55,0.28)]">
         {/* Header */}
@@ -412,7 +419,7 @@ export default function CartCheckoutDrawer({ isOpen, items, onClose, onUpdateQua
               {step === 'cart' ? `Giỏ hàng (${itemCount})` : 'Thanh toán'}
             </h2>
           </div>
-          <button type="button" onClick={onClose}
+          <button type="button" onClick={handleClose}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary hover:border-primary hover:text-primary"
             aria-label="Đóng">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="h-5 w-5">
@@ -431,7 +438,7 @@ export default function CartCheckoutDrawer({ isOpen, items, onClose, onUpdateQua
             onRemoveItem={onRemoveItem}
             onClearCart={onClearCart}
             onCheckout={() => setStep('checkout')}
-            onClose={onClose}
+            onClose={handleClose}
           />
         ) : (
           <CheckoutStep
@@ -441,7 +448,7 @@ export default function CartCheckoutDrawer({ isOpen, items, onClose, onUpdateQua
             shippingQuote={shippingQuote}
             onBack={() => setStep('cart')}
             onClearCart={onClearCart}
-            onClose={onClose}
+            onClose={handleClose}
           />
         )}
       </aside>
