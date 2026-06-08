@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const navItems = [
   {
@@ -11,20 +11,24 @@ const navItems = [
       { label: 'Tin tức', href: '#news' },
     ],
   },
-  { label: 'Chó', href: '/?view=products&q=chó', hasDropdown: true, items: [
+  {
+    label: 'Chó', href: '/?view=products&q=chó', hasDropdown: true, items: [
       { label: 'Tất cả sản phẩm chó', href: '/?view=products&q=chó' },
       { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=khô' },
       { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+ch%C3%B3&q=ướt' },
       { label: 'Snack cho chó', href: '/?view=products&q=snack+chó' },
       { label: 'Vệ sinh & Chăm sóc', href: '/?view=products&q=chó&category=Chăm+sóc+lông' },
-    ]},
-  { label: 'Mèo', href: '/?view=products&q=mèo', hasDropdown: true, items: [
+    ],
+  },
+  {
+    label: 'Mèo', href: '/?view=products&q=mèo', hasDropdown: true, items: [
       { label: 'Tất cả sản phẩm mèo', href: '/?view=products&q=mèo' },
       { label: 'Thức ăn khô', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=khô' },
       { label: 'Thức ăn ướt', href: '/?view=products&category=Th%E1%BB%A9c+%C4%83n+cho+m%C3%A8o&q=ướt' },
       { label: 'Snack cho mèo', href: '/?view=products&q=snack+mèo' },
       { label: 'Khay & Bồn vệ sinh', href: '/?view=products&q=khay+mèo' },
-    ]},
+    ],
+  },
   { label: 'Shop', href: '/?view=products' },
   {
     label: 'Dịch vụ thú cưng',
@@ -57,12 +61,50 @@ const CartIcon = () => (
   </svg>
 );
 
+const SearchIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path strokeLinecap="round" d="M20 20l-3.5-3.5" />
+  </svg>
+);
+
 export default function Header({ cartCount = 0, onCartOpen }) {
   const [openMenu, setOpenMenu] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+  const searchBoxRef = useRef(null);
 
   const handleMenuOpen = (menu) => setOpenMenu(menu);
   const handleMenuClose = () => setOpenMenu(null);
+
+  // focus input khi mở search
+  useEffect(() => {
+    if (isSearchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isSearchOpen]);
+
+  // đóng search khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    if (isSearchOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchOpen]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    window.location.href = `/?view=products&q=${encodeURIComponent(q)}`;
+    setIsSearchOpen(false);
+    setSearchQuery('');
+  };
 
   return (
     <header className="site-header fixed top-0 left-0 right-0 z-50 bg-white text-secondary shadow-[0_12px_35px_rgba(31,41,55,0.07)]">
@@ -73,7 +115,8 @@ export default function Header({ cartCount = 0, onCartOpen }) {
         <span className="bg-[#62B44B]" />
       </div>
 
-      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10 xl:px-12">
+      <div className="mx-auto flex min-h-[86px] w-full max-w-[1360px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10 xl:px-12">
+        {/* Logo */}
         <a href="/" className="flex shrink-0 items-center" aria-label="3F Store">
           <img
             src="/logo-3f.png"
@@ -82,6 +125,7 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           />
         </a>
 
+        {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[16px] font-bold text-[#6F6F6F] xl:flex">
           {navItems.map((item) => (
             <div
@@ -117,17 +161,53 @@ export default function Header({ cartCount = 0, onCartOpen }) {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-3">
+        {/* Right side actions */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+
+          {/* ── Search bar (desktop expand) ── */}
+          <div ref={searchBoxRef} className="relative hidden xl:flex items-center">
+            {isSearchOpen ? (
+              <form onSubmit={handleSearchSubmit} className="flex items-center">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm sản phẩm..."
+                  className="w-[220px] rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-4 pr-10 text-sm text-secondary outline-none transition-all focus:border-primary focus:bg-white"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-3 text-muted hover:text-primary"
+                  aria-label="Tìm kiếm"
+                >
+                  <SearchIcon />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(true)}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary transition-colors hover:border-primary hover:text-primary"
+                aria-label="Mở tìm kiếm"
+              >
+                <SearchIcon />
+              </button>
+            )}
+          </div>
+
+          {/* Phone (desktop) */}
           <a
             href="tel:0869224692"
-            className="hidden items-center gap-3 rounded-full bg-primary px-3 py-2 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(240,90,40,0.24)] transition-transform hover:-translate-y-0.5 sm:flex sm:pr-6"
+            className="hidden items-center gap-3 rounded-full bg-primary px-3 py-2 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(240,90,40,0.24)] transition-transform hover:-translate-y-0.5 sm:flex sm:pr-6 xl:flex"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary">
               <PhoneIcon />
             </span>
-            <span>0869.224.692</span>
+            <span className="hidden xl:inline">0869.224.692</span>
           </a>
 
+          {/* Cart */}
           <button
             type="button"
             onClick={onCartOpen}
@@ -142,9 +222,10 @@ export default function Header({ cartCount = 0, onCartOpen }) {
             ) : null}
           </button>
 
+          {/* Mobile hamburger */}
           <button
             type="button"
-            onClick={() => setIsMobileMenuOpen((value) => !value)}
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
             className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary xl:hidden"
             aria-label="Mở menu"
             aria-expanded={isMobileMenuOpen}
@@ -156,27 +237,51 @@ export default function Header({ cartCount = 0, onCartOpen }) {
         </div>
       </div>
 
+      {/* ── Mobile menu ── */}
       {isMobileMenuOpen ? (
         <div className="border-t border-gray-100 bg-white px-4 py-4 shadow-[0_18px_36px_rgba(31,41,55,0.08)] xl:hidden">
-          <nav className="mx-auto flex max-w-[1360px] flex-col gap-2">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-2xl px-4 py-3 text-sm font-extrabold text-secondary transition-colors hover:bg-primary hover:text-white"
-              >
-                {item.label}
-              </a>
-            ))}
+          <div className="mx-auto max-w-[1360px] flex flex-col gap-3">
+
+            {/* Mobile search */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5"
+            >
+              <SearchIcon />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm sản phẩm..."
+                className="flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted"
+              />
+              <button type="submit" className="text-xs font-bold text-primary">
+                Tìm
+              </button>
+            </form>
+
+            {/* Nav links */}
+            <nav className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-2xl px-4 py-3 text-sm font-extrabold text-secondary transition-colors hover:bg-primary hover:text-white"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+
             <a
               href="tel:0869224692"
-              className="mt-2 inline-flex items-center justify-center gap-3 rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white sm:hidden"
+              className="mt-1 inline-flex items-center justify-center gap-3 rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white sm:hidden"
             >
               <PhoneIcon />
               0869.224.692
             </a>
-          </nav>
+          </div>
         </div>
       ) : null}
     </header>
