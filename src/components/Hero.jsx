@@ -68,7 +68,7 @@ export default function Hero() {
 					</h1>
 
 					<p className="mt-2 max-w-[320px] text-sm leading-6 text-[#888] sm:text-[15px] sm:leading-7">
-						Hệ thống cửa hàng thú cưng hàng đầu Việt Nam. Cung cấp thú cảnh,
+						Hệ thống cửa hàng đồ ăn thú cưng hàng đầu Việt Nam. Cung cấp thú cảnh,
 						thức ăn, phụ kiện và dịch vụ dành cho thú cưng.
 					</p>
 
