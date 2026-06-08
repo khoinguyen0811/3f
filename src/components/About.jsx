@@ -14,39 +14,19 @@ const coupons = [
 ];
 
 function CouponSlider() {
-  const [active, setActive] = useState(0);
   const [copied, setCopied] = useState(null);
-  const intervalRef = useRef(null);
-
-  const startAuto = () => {
-    intervalRef.current = setInterval(() => {
-      setActive((p) => (p + 1) % coupons.length);
-    }, 3000);
-  };
-
-  useEffect(() => {
-    startAuto();
-    return () => clearInterval(intervalRef.current);
-  }, []);
+  const [showAll, setShowAll] = useState(false);
 
   const handleCopy = (code) => {
     navigator.clipboard?.writeText(code).catch(() => {});
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
-    clearInterval(intervalRef.current);
-    startAuto();
   };
 
-  const go = (idx) => {
-    setActive(idx);
-    clearInterval(intervalRef.current);
-    startAuto();
-  };
-
-  const cur = coupons[active];
+  const visibleCoupons = showAll ? coupons : coupons.slice(0, 4);
 
   return (
-    <div className="about-anim overflow-hidden rounded-[32px] bg-gray-50 border border-gray-100 p-6 sm:p-8">
+    <div className="about-anim rounded-[32px] bg-gray-50 border border-gray-100 p-6 sm:p-8">
       <div className="mb-5 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-primary">
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
@@ -54,68 +34,47 @@ function CouponSlider() {
         <h3 className="font-display text-lg font-extrabold text-secondary sm:text-xl">Mã giảm giá dành cho bạn</h3>
       </div>
 
-      {/* Main coupon card */}
-      <div
-        key={active}
-        className={`${cur.light} relative overflow-hidden rounded-2xl p-5 sm:p-6 transition-all duration-300`}
-        style={{ minHeight: 130 }}
-      >
-        {/* Big emoji bg */}
-        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 select-none text-[80px] opacity-10">
-          {cur.emoji}
-        </span>
+      {/* Grid: mobile 1col, desktop 2col */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {visibleCoupons.map((cur) => (
+          <div
+            key={cur.code}
+            className={`${cur.light} relative overflow-hidden rounded-2xl p-4`}
+          >
+            {/* Big emoji bg */}
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-[60px] opacity-10">
+              {cur.emoji}
+            </span>
 
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold text-muted sm:text-sm">{cur.desc}</p>
-            <p className={`mt-1 font-display text-2xl font-black tracking-widest sm:text-3xl ${cur.color.replace('bg-', 'text-')}`}>
+            <p className="text-xs font-semibold text-muted">{cur.desc}</p>
+            <p className={`mt-0.5 font-display text-xl font-black tracking-widest ${cur.color.replace('bg-', 'text-')}`}>
               {cur.code}
             </p>
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p className="text-[10px] text-muted">Áp dụng có điều kiện</p>
+              <button
+                type="button"
+                onClick={() => handleCopy(cur.code)}
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95 ${cur.color}`}
+              >
+                {copied === cur.code ? '✓ Đã chép!' : 'Sao chép'}
+              </button>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleCopy(cur.code)}
-            className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 ${cur.color} shadow-md`}
-          >
-            {copied === cur.code ? '✓ Đã chép!' : 'Sao chép'}
-          </button>
-        </div>
-
-        {/* Dashed border decoration */}
-        <div className="mt-4 border-t border-dashed border-current opacity-10" />
-        <p className="mt-2 text-[11px] text-muted">Nhập mã khi thanh toán · Áp dụng có điều kiện</p>
+        ))}
       </div>
 
-      {/* Dots + arrows */}
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex gap-1.5">
-          {coupons.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => go(i)}
-              className={`h-2 rounded-full transition-all ${i === active ? 'w-6 bg-primary' : 'w-2 bg-gray-300'}`}
-              aria-label={`Mã ${i + 1}`}
-            />
-          ))}
-        </div>
-
-        <div className="flex gap-2">
-          <button type="button" onClick={() => go((active - 1 + coupons.length) % coupons.length)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary hover:border-primary hover:text-primary">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-          <button type="button" onClick={() => go((active + 1) % coupons.length)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary hover:border-primary hover:text-primary">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* Mobile: xem thêm nếu chưa show all */}
+      {!showAll && coupons.length > 4 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mt-4 w-full rounded-full border-2 border-primary bg-white py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary hover:text-white sm:hidden"
+        >
+          Xem thêm ({coupons.length - 4} mã nữa)
+        </button>
+      )}
     </div>
   );
 }
